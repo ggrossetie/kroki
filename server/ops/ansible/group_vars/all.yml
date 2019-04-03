@@ -1,0 +1,26 @@
+---
+ansible_user: root
+
+ubuntu_repositories:
+  - deb http://archive.ubuntu.com/ubuntu/ bionic universe
+  - deb http://archive.ubuntu.com/ubuntu/ bionic-updates universe
+  - deb http://security.ubuntu.com/ubuntu/ bionic-security universe
+  - ppa:certbot/certbot
+  - deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable
+
+ubuntu_default_packages:
+  - netcat
+  - htop
+  - curl
+  - vim
+  - lsof
+  - software-properties-common
+  - certbot
+  - nginx
+  - python-certbot-nginx
+  - apt-transport-https
+  - ca-certificates
+  - gnupg-agent
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io

@@ -1,0 +1,33 @@
+---
+- hosts: all
+  tasks:
+    - name: apt | Add docker key
+      become: true
+      apt_key:
+        id: 0EBFCD88
+        url: "https://download.docker.com/linux/ubuntu/gpg"
+        state: present
+
+    - name: apt | Add repositories
+      become: true
+      apt_repository:
+        repo:  "{{ item }}"
+      with_items: "{{ ubuntu_repositories }}"
+
+    - name: apt | Update cache
+      become: true
+      apt:
+        update_cache: yes
+
+    - name: apt | Install default packages
+      become: true
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items: "{{ ubuntu_default_packages }}"
+
+
+
+
+
+

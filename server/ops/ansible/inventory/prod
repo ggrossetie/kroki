@@ -1,0 +1,3 @@
+[web]
+a.kroki.io ansible_host=89.145.161.30
+b.kroki.io ansible_host=89.145.163.63
