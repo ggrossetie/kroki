@@ -1,0 +1,24 @@
+version: "2.1"
+services:
+  core:
+    image: "yuzutech/kroki:0.0.4"
+    environment:
+      - KROKI_BLOCKDIAG_HOST=blockdiag
+      - KROKI_BODY_LIMIT=100000 # 100Kb
+      - KROKI_MERMAID_HOST=mermaid
+    mem_limit: 1792M
+    restart: on-failure
+    ports:
+      - "8000:8000"
+  blockdiag:
+    image: "yuzutech/kroki-blockdiag:0.0.4"
+    mem_limit: 512M
+    restart: on-failure
+    ports:
+      - "8001:8001"
+  mermaid:
+    image: "yuzutech/kroki-mermaid:0.0.4"
+    mem_limit: 1024M
+    restart: on-failure
+    ports:
+     - "8002:8002"
