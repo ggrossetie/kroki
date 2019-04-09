@@ -1,6 +1,6 @@
 server {
 
-    server_name kroki.io;
+    server_name a.kroki.io;
 
     root /var/www/kroki.io;
     index index.html;
@@ -21,28 +21,27 @@ server {
 
     error_page 500 502 503 504 /50x.html;
 
-    location = / {
-        if ($request_method = POST) {
-            proxy_pass http://app_kroki;
-            break;
-        }
-
+    location ~ ^/50x\.html$ {
         try_files $uri $uri/ =404;
     }
 
-    location ~ ^/(index|examples|50x)\.html$ {
-        try_files $uri $uri/ =404;
-    }
-
-    location ~ ^/(css|assets|js)/.*\.(png|svg|css|js)$ {
-        try_files $uri $uri/ =404;
-    }
-
-    listen [::]:443 ssl ipv6only=on; # managed by Certbot
+    listen [::]:443 ssl; # managed by Certbot
     listen 443 ssl; # managed by Certbot
     ssl_certificate /etc/letsencrypt/live/a.kroki.io/fullchain.pem; # managed by Certbot
     ssl_certificate_key /etc/letsencrypt/live/a.kroki.io/privkey.pem; # managed by Certbot
     include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+}
+
+server {
+    if ($host = a.kroki.io) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+    listen 80;
+    listen [::]:80;
+    server_name a.kroki.io;
+    return 404; # managed by Certbot
 
 }
