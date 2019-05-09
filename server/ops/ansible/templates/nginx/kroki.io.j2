@@ -1,6 +1,6 @@
 server {
 
-    server_name kroki.io;
+    server_name xx.kroki.io kroki.io;
 
     root /var/www/kroki.io;
     index index.html;
@@ -38,7 +38,15 @@ server {
         try_files $uri $uri/ =404;
     }
 
-    location ~ ^/(css|assets|js)/.*\.(png|svg|css|js)$ {
+    location ~ ^/favicon\.ico$ {
+        try_files $uri $uri/ =404;
+    }
+
+    location ~ ^/robots\.txt$ {
+        try_files $uri $uri/ =404;
+    }
+
+    location ~ ^/(css|assets|js)/.*\.(png|svg|css|js|css\.map)$ {
         try_files $uri $uri/ =404;
     }
 
