@@ -21,6 +21,7 @@ buildDockerImages:
 	cd nomnoml && $(MAKE) package
 	cd vega && $(MAKE) package
 	cd wavedrom && $(MAKE) package
+	docker build -f server/ops/docker/build-static-gnuplot -t kroki-builder-static-gnuplot .
 	docker build -f server/ops/docker/build-static-erd -t kroki-builder-static-erd .
 	docker build -f server/ops/docker/build-static-svgbob -t kroki-builder-static-svgbob .
 	cd server && $(MAKE) package
