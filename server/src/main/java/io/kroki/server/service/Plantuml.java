@@ -1,5 +1,6 @@
 package io.kroki.server.service;
 
+import io.kroki.server.action.InterruptibleThread;
 import io.kroki.server.decode.DiagramSource;
 import io.kroki.server.decode.SourceDecoder;
 import io.kroki.server.error.BadRequestException;
@@ -8,6 +9,11 @@ import io.kroki.server.format.FileFormat;
 import io.kroki.server.response.Caching;
 import io.kroki.server.response.DiagramResponse;
 import io.kroki.server.security.SafeMode;
+import io.kroki.server.unit.TimeValue;
+import io.kroki.umlet.UmletConverter;
+import io.vertx.core.Vertx;
+import io.vertx.core.WorkerExecutor;
+import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
@@ -37,6 +43,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -75,6 +85,8 @@ public class Plantuml implements DiagramService {
   private static final List<FileFormat> SUPPORTED_FORMATS = Arrays.asList(FileFormat.PNG, FileFormat.SVG, FileFormat.JPEG, FileFormat.BASE64, FileFormat.TXT, FileFormat.UTXT);
   private static final Pattern STDLIB_PATH_RX = Pattern.compile("<([a-zA-Z0-9]+)/[^>]+>");
 
+  private final WorkerExecutor workerExecutor;
+  private final Vertx vertx;
   private final SafeMode safeMode;
   private final SourceDecoder sourceDecoder;
   private final DiagramResponse diagramResponse;
@@ -92,7 +104,16 @@ public class Plantuml implements DiagramService {
     "osa",
     "tupadr3");
 
-  public Plantuml(JsonObject config) {
+  public Plantuml(Vertx vertx, JsonObject config) {
+    String commandTimeoutValue = config.getString("KROKI_COMMAND_TIMEOUT", "5s");
+    TimeValue commandTimeout = TimeValue.parseTimeValue(commandTimeoutValue, "KROKI_COMMAND_TIMEOUT");
+    this.vertx = vertx;
+    this.workerExecutor = vertx.createSharedWorkerExecutor(
+      "plantuml",
+      config.getInteger("KROKI_PLANTUML_WORKER_POOL_SIZE", 2),
+      commandTimeout.duration(),
+      commandTimeout.timeUnit()
+      );
     this.safeMode = SafeMode.get(config.getString("KROKI_SAFE_MODE", "secure"), SafeMode.SECURE);
     this.sourceDecoder = new SourceDecoder() {
       @Override
@@ -173,8 +194,53 @@ public class Plantuml implements DiagramService {
       }
       return;
     }
-    byte[] data = convert(source, fileFormat);
-    diagramResponse.end(response, sourceDecoded, fileFormat, data);
+    final String diagram = source;
+    EventBus eventBus = vertx.eventBus();
+    eventBus.request("", diagram, ar -> {
+      if (ar.succeeded()) {
+        ar.result().body();
+      }
+    });
+
+    InterruptibleThread interruptibleThread =  new InterruptibleThread(() -> {
+      System.out.println("running...");
+      byte[] result = convert(diagram, fileFormat);
+      System.out.println("response!" + result.length);
+      diagramResponse.end(response, sourceDecoded, fileFormat, result);
+    });
+    interruptibleThread.start();
+    vertx.setTimer(5000, handler -> {
+      System.out.println("thread.interrupt after 5s!");
+      interruptibleThread.interrupt(); // calling interrupt() method
+    });
+
+    /*
+    ScheduledExecutorService executor = Executors.newScheduledThreadPool(2);
+    Future<?> future = executor.submit(task);
+    executor.schedule(() -> {
+      System.out.println("future.cancel after 5s!");
+      future.cancel(true);
+    }, 5000, TimeUnit.MILLISECONDS);
+    System.out.println("executor.shutdown");
+    executor.shutdown();
+     */
+/*
+    workerExecutor.executeBlocking(future -> {
+      try {
+        byte[] result = convert(diagram, fileFormat);
+        future.complete(result);
+      } catch (RuntimeException e) {
+        future.fail(e);
+      }
+    }, res -> {
+      if (res.failed()) {
+        routingContext.fail(res.cause());
+        return;
+      }
+      byte[] result = (byte[]) res.result();
+      diagramResponse.end(response, sourceDecoded, fileFormat, result);
+    });
+ */
   }
 
   static byte[] convert(String source, FileFormat format) {

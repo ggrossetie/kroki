@@ -1,10 +1,18 @@
 package io.kroki.server.service;
 
+import io.kroki.server.action.Executor;
 import io.kroki.server.error.BadRequestException;
 import io.kroki.server.format.FileFormat;
 import io.kroki.server.security.SafeMode;
+import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.RoutingContext;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatcher;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -13,11 +21,21 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class PlantumlServiceTest {
 
@@ -27,6 +45,59 @@ public class PlantumlServiceTest {
     assertThatThrownBy(() -> Plantuml.convert(diagram, FileFormat.SVG))
       .isInstanceOf(BadRequestException.class)
       .hasMessageStartingWith("Syntax Error? (line: 1)");
+  }
+
+  @Test
+  void should_return_a_response() throws InterruptedException {
+    RoutingContext routingContextMock = mock(RoutingContext.class);
+    HttpServerResponse httpServerResponseMock = mock(HttpServerResponse.class);
+    when(routingContextMock.response()).thenReturn(httpServerResponseMock);
+    when(httpServerResponseMock.putHeader(any(CharSequence.class), any(CharSequence.class))).thenReturn(httpServerResponseMock);
+    Vertx vertx = Vertx.vertx();
+    Map<String, Object> config = new HashMap<>();
+    Plantuml plantuml = new Plantuml(vertx, new JsonObject(config));
+    String diagram = "@startuml\nBob->Alice:hello\n@enduml";
+
+    CountDownLatch lock = new CountDownLatch(1);
+    plantuml.convert(routingContextMock, diagram, "plantuml", FileFormat.SVG);
+    Thread.sleep(2000);
+    // wait for close at most 2000ms
+    vertx.close(event -> lock.countDown());
+    lock.await(2000, TimeUnit.MILLISECONDS);
+    Mockito.verify(httpServerResponseMock).end(argThat((ArgumentMatcher<Buffer>) argument -> argument.toString().startsWith("<?xml version=") && argument.toString().contains("Bob->Alice:hello")));
+  }
+
+  @Test
+  void should_cancel_exec() throws InterruptedException, TimeoutException, ExecutionException {
+    Executor.execute(Vertx.vertx());
+  }
+
+  @Test
+  void should_not_block_thread() throws InterruptedException {
+    RoutingContext routingContextMock = mock(RoutingContext.class);
+    HttpServerResponse httpServerResponseMock = mock(HttpServerResponse.class);
+    when(routingContextMock.response()).thenReturn(httpServerResponseMock);
+    when(httpServerResponseMock.putHeader(any(CharSequence.class), any(CharSequence.class))).thenReturn(httpServerResponseMock);
+    Vertx vertx = Vertx.vertx();
+    Map<String, Object> config = new HashMap<>();
+    Plantuml plantuml = new Plantuml(vertx, new JsonObject(config));
+    String diagram = "@startgantt\n" +
+      "title Plan\n" +
+      "\n" +
+      "[UI 1] on {Bob} lasts 5 days\n" +
+      "[UI 2] on {Bob:0%} lasts 4 days\n" +
+      "[UI Task] on {Bob} {Alice} happens 1 days after [UI 2]'s end\n" +
+      "[Start] -[dotted]-> [UI 1]\n" +
+      "[UI 1] -> [UI 2]\n" +
+      "[UI 2] -> [UI Task]\n" +
+      "@endgantt";
+
+    CountDownLatch lock = new CountDownLatch(1);
+    plantuml.convert(routingContextMock, diagram, "plantuml", FileFormat.SVG);
+    Thread.sleep(20000);
+    // wait for close at most 2000ms
+    vertx.close(event -> lock.countDown());
+    lock.await(20000, TimeUnit.MILLISECONDS);
   }
 
   @Test
