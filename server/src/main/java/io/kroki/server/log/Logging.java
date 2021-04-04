@@ -8,14 +8,17 @@ import io.vertx.ext.web.client.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import ua_parser.Parser;
 
 public class Logging {
 
   public static final Logger deprecationLogger = LoggerFactory.getLogger("io.kroki.server.deprecation");
   private final Logger logger;
+  private final UserAgentContext userAgentContext;
 
   public Logging(Logger logger) {
     this.logger = logger;
+    this.userAgentContext = new UserAgentContext(new Parser());
   }
 
   public void requestReceived(RoutingContext routingContext, String serviceName) {
@@ -26,10 +29,7 @@ public class Logging {
       MDC.put("path", request.path());
       MDC.put("service_name", serviceName);
       MDC.put("bytes_read", String.valueOf(request.bytesRead()));
-      String userAgent = request.getHeader("User-Agent");
-      if (userAgent != null) {
-        MDC.put("user_agent", userAgent);
-      }
+      userAgentContext.put(request.getHeader("User-Agent"), MDC.getMDCAdapter());
       logger.info("Request received {} {}", request.method(), request.path());
     } finally {
       MDC.remove("action");
@@ -116,6 +116,4 @@ public class Logging {
       MDC.remove("error_message");
     }
   }
-
-
 }
