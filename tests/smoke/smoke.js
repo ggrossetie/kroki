@@ -5,6 +5,7 @@ const tests = [
   {engine: 'actdiag', file: 'actions.diag', outputFormat: ['svg']},
   {engine: 'nwdiag', file: 'network.diag', outputFormat: ['svg']},
   {engine: 'c4plantuml', file: 'banking-system.puml', outputFormat: ['svg']},
+  {engine: 'c4plantuml', file: 'deployment.puml', outputFormat: ['svg']},
   {engine: 'ditaa', file: 'components.ditaa', outputFormat: ['svg']},
   {engine: 'erd', file: 'schema.erd', outputFormat: ['svg']},
   {engine: 'mermaid', file: 'contribute.mmd', outputFormat: ['svg']},
