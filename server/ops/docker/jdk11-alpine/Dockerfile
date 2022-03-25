@@ -5,7 +5,7 @@ RUN addgroup -g 1000 kroki && adduser -D -G kroki -u 1000 kroki
 
 COPY --from=kroki-builder-static-svgbob:latest /home/rust/.cargo/bin/svgbob /usr/bin/svgbob
 COPY --from=kroki-builder-static-erd:latest /root/.local/bin/erd /usr/bin/erd
-COPY --from=kroki-builder-nomnoml:latest /app/app.bin /usr/bin/nomnoml
+COPY --from=yuzutech/kroki-builder-nomnoml:latest /app/app.bin /usr/bin/nomnoml
 COPY --from=kroki-builder-vega:latest /app/app.bin /usr/bin/vega
 COPY --from=kroki-builder-vega:latest /app/canvas.node /usr/bin/canvas.node
 COPY --from=kroki-builder-wavedrom:latest /app/app.bin /usr/bin/wavedrom
