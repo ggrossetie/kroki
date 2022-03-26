@@ -3,14 +3,14 @@ FROM eclipse-temurin:11.0.14_9-jre-alpine
 
 RUN addgroup -g 1000 kroki && adduser -D -G kroki -u 1000 kroki
 
-COPY --from=kroki-builder-static-svgbob:latest /home/rust/.cargo/bin/svgbob /usr/bin/svgbob
-COPY --from=kroki-builder-static-erd:latest /root/.local/bin/erd /usr/bin/erd
-COPY --from=kroki-builder-nomnoml:latest /app/app.bin /usr/bin/nomnoml
+COPY --from=yuzutech/kroki-builder-svgbob:0.5.3 /home/rust/.cargo/bin/svgbob /usr/bin/svgbob
+COPY --from=yuzutech/kroki-builder-erd:0.2.1.0 /root/.local/bin/erd /usr/bin/erd
+COPY --from=yuzutech/kroki-builder-pikchr:7269f78c4a /build/pikchr /usr/bin/pikchr
+COPY --from=yuzutech/kroki-builder-nomnoml:1.4.0-node14.19.1-alpine3.15 /app/app.bin /usr/bin/nomnoml
 COPY --from=kroki-builder-vega:latest /app/app.bin /usr/bin/vega
 COPY --from=kroki-builder-vega:latest /app/canvas.node /usr/bin/canvas.node
 COPY --from=kroki-builder-wavedrom:latest /app/app.bin /usr/bin/wavedrom
 COPY --from=kroki-builder-bytefield:latest /app/app.bin /usr/bin/bytefield
-COPY --from=kroki-builder-static-pikchr:latest /build/pikchr /usr/bin/pikchr
 
 RUN apk add --update --no-cache \
            libjpeg \
