@@ -6,7 +6,7 @@ default:
 
 package:
 ifeq ($(BUILDX_AVAILABLE), 0)
-ifeq ($(ENV), "true")
+ifeq ($(CI), "true")
 CACHE_OPS = "--cache-from $CACHE_FROM --cache-to $CACHE_TO"
 endif
 	docker buildx build -f ops/docker/alpine/Dockerfile -t kroki-builder-wavedrom:alpine -t kroki-builder-wavedrom:latest $(CACHE_OPS) .

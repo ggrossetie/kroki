@@ -6,7 +6,7 @@ default:
 
 package:
 ifeq ($(BUILDX_AVAILABLE), 0)
-ifeq ($(ENV), "true")
+ifeq ($(CI), "true")
 CACHE_OPS = "--cache-from $CACHE_FROM --cache-to $CACHE_TO"
 endif
 	docker buildx build -f build-static-erd -t kroki-builder-static-erd $(CACHE_OPS) .
