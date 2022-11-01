@@ -10,7 +10,7 @@ default: package
 
 package:
 ifeq ($(BUILDX_AVAILABLE), 0)
-	docker buildx build --tag yuzutech/kroki-blockdiag:latest --load $(CACHE_OPS) .
+	docker buildx build -o type="image,push=false" --tag yuzutech/kroki-blockdiag:latest $(CACHE_OPS) .
 else
 	docker build -t yuzutech/kroki-blockdiag .
 endif
