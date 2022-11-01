@@ -11,9 +11,9 @@ default: package
 
 package:
 ifeq ($(MULTI_ARCH_AVAILABLE), 0)
-	docker buildx build -o type="image,push=false" --platform linux/amd64,linux/arm64 --tag yuzutech/kroki-excalidraw:latest $(CACHE_OPS) .
+	docker buildx build --platform linux/amd64,linux/arm64 --tag yuzutech/kroki-excalidraw:latest --load $(CACHE_OPS) .
 else ifeq ($(BUILDX_AVAILABLE), 0)
-	docker buildx build --tag yuzutech/kroki-excalidraw:latest -o type="image,push=false" $(CACHE_OPS) .
+	docker buildx build --tag yuzutech/kroki-excalidraw:latest --load $(CACHE_OPS) .
 else
  	docker build -t yuzutech/kroki-excalidraw .
 endif
