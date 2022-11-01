@@ -68,6 +68,54 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
 
+    - name: Cache Docker layers
+      uses: actions/cache@v2
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
+
+    - name: Build nomnoml
+      uses: docker/build-push-action@v2
+      with:
+        context: nomnoml
+        file: nomnoml/ops/docker/alpine/Dockerfile
+        push: false
+        tags: kroki-builder-nomnoml:alpine,kroki-builder-nomnoml:latest
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+    - name: Build vega
+      uses: docker/build-push-action@v2
+      with:
+        context: vega
+        file: vega/ops/docker/alpine/Dockerfile
+        push: false
+        tags: kroki-builder-vega:alpine,kroki-builder-vega:latest
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+    - name: Build wavedrom
+      uses: docker/build-push-action@v2
+      with:
+        context: wavedrom
+        file: wavedrom/ops/docker/alpine/Dockerfile
+        push: false
+        tags: kroki-builder-wavedrom:alpine,kroki-builder-wavedrom:latest
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+    - name: Build bytefield
+      uses: docker/build-push-action@v2
+      with:
+        context: bytefield
+        file: bytefield/ops/docker/alpine/Dockerfile
+        push: false
+        tags: kroki-builder-bytefield:alpine,kroki-builder-bytefield:latest
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache-new
+
     - name: Build container images
       run: make buildDockerImages
 
@@ -81,3 +129,13 @@ jobs:
 
     - name: Run smoke tests
       run: make smokeTests
+
+    # This ugly bit is necessary if you don't want your cache to grow forever until it hits GitHub's limit of 5GB.
+    # Temp fix
+    # https://github.com/docker/build-push-action/issues/252
+    # https://github.com/moby/buildkit/issues/1896
+    - name: Move cache
+      run: |
+        rm -rf /tmp/.buildx-cache
+        mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
