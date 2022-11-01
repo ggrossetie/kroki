@@ -31,7 +31,6 @@ buildDockerImages:
 	$(MAKE) -C vega package
 	$(MAKE) -C wavedrom package
 	$(MAKE) -C bytefield package
-	$(MAKE) -C server/ops/docker package
 	$(MAKE) -C server package
 	$(MAKE) -C blockdiag package
 	$(MAKE) -C mermaid package
