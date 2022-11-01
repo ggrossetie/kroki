@@ -17,7 +17,6 @@ else ifeq ($(BUILDX_AVAILABLE), 0)
 else
  	docker build -t yuzutech/kroki-excalidraw .
 endif
-endif
 
 publish:
 ifndef RELEASE_VERSION
