@@ -15,10 +15,10 @@ ifeq ($(BUILDX_AVAILABLE), 0)
 	                    -t yuzutech/kroki:jdk11-alpine \
 	                    -t yuzutech/kroki:jdk-11 \
 	                    -t yuzutech/kroki:latest \
-	                    --build-context kroki-builder-nomnoml=docker-image://kroki-builder-nomnoml:latest \
-	                    --build-context kroki-builder-vega=docker-image://kroki-builder-vega:latest \
-	                    --build-context kroki-builder-wavedrom=docker-image://kroki-builder-wavedrom:latest \
-	                    --build-context kroki-builder-bytefield=docker-image://kroki-builder-bytefield:latest \
+	                    --build-context kroki-builder-nomnoml=docker-image://yuzutech/kroki-builder-nomnoml:latest \
+	                    --build-context kroki-builder-vega=docker-image://yuzutech/kroki-builder-vega:latest \
+	                    --build-context kroki-builder-wavedrom=docker-image://yuzutech/kroki-builder-wavedrom:latest \
+	                    --build-context kroki-builder-bytefield=docker-image://yuzutech/kroki-builder-bytefield:latest \
 	                    --output=type=docker $(CACHE_OPS) .
 else
 	docker build -f ops/docker/jdk11-alpine/Dockerfile -t yuzutech/kroki:jdk11-alpine -t yuzutech/kroki:jdk-11 -t yuzutech/kroki:latest .

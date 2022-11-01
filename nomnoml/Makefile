@@ -11,7 +11,7 @@ default:
 package:
 ifeq ($(BUILDX_AVAILABLE), 0)
 
-	docker buildx build -f ops/docker/alpine/Dockerfile -t kroki-builder-nomnoml:alpine -t kroki-builder-nomnoml:latest -o type="image,push=false" $(CACHE_OPS) .
+	docker buildx build -f ops/docker/alpine/Dockerfile -t yuzutech/kroki-builder-nomnoml:alpine -t yuzutech/kroki-builder-nomnoml:latest -o type="image,push=false" $(CACHE_OPS) .
 else
-	docker build -f ops/docker/alpine/Dockerfile -t kroki-builder-nomnoml:alpine -t kroki-builder-nomnoml:latest .
+	docker build -f ops/docker/alpine/Dockerfile -t yuzutech/kroki-builder-nomnoml:alpine -t yuzutech/kroki-builder-nomnoml:latest .
 endif

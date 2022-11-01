@@ -10,8 +10,8 @@ default:
 
 package:
 ifeq ($(BUILDX_AVAILABLE), 0)
-	docker buildx build -f ops/docker/alpine/Dockerfile -t kroki-builder-wavedrom:alpine -t kroki-builder-wavedrom:latest -o type="image,push=false" $(CACHE_OPS) .
+	docker buildx build -f ops/docker/alpine/Dockerfile -t yuzutech/kroki-builder-wavedrom:alpine -t yuzutech/kroki-builder-wavedrom:latest -o type="image,push=false" $(CACHE_OPS) .
 else
-	docker build -f ops/docker/alpine/Dockerfile -t kroki-builder-wavedrom:alpine -t kroki-builder-wavedrom:latest .
+	docker build -f ops/docker/alpine/Dockerfile -t yuzutech/kroki-builder-wavedrom:alpine -t yuzutech/kroki-builder-wavedrom:latest .
 endif
 

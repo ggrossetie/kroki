@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # build static executable binary
 FROM ubuntu:18.04 as kroki-builder-static-erd
 
@@ -30,7 +31,7 @@ RUN gcc -O0 -g -static -Wall -Wextra -DPIKCHR_SHELL pikchr.c -o pikchr -lm
 
 # build static executable binary
 FROM ekidd/rust-musl-builder:1.56.1 as kroki-builder-static-svgbob
-COPY Cargo.toml .
+COPY ops/docker/Cargo.toml .
 
 RUN SVGBOB_VERSION=`cat Cargo.toml | grep "svgbob_cli =" | sed -r 's/.*"([^"]+)"/\1/'` \
   && cargo install --quiet --version $SVGBOB_VERSION svgbob_cli
