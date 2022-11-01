@@ -11,9 +11,9 @@ default: package
 
 package:
 ifeq ($(MULTI_ARCH_AVAILABLE), 0)
-	docker buildx build --platform linux/amd64,linux/arm64 --tag yuzutech/kroki-bpmn:latest --load $(CACHE_OPS) .
+	docker buildx build -o type="image,push=false" --platform linux/amd64,linux/arm64 --tag yuzutech/kroki-bpmn:latest $(CACHE_OPS) .
 else ifeq ($(BUILDX_AVAILABLE), 0)
-	docker buildx build --tag yuzutech/kroki-bpmn:latest --load $(CACHE_OPS) .
+	docker buildx build -o type="image,push=false" --tag yuzutech/kroki-bpmn:latest $(CACHE_OPS) .
 else
 	docker build -t yuzutech/kroki-bpmn .
 endif
