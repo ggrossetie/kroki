@@ -1,8 +1,8 @@
 MULTI_ARCH_AVAILABLE := $(shell docker buildx inspect | grep amd64 | grep arm64 > /dev/null 2>&1; echo $$?)
 BUILDX_AVAILABLE := $(shell docker buildx inspect | grep -i -e running -e amd64 > /dev/null 2>&1; echo $$?)
 
-ifdef $(CI)
-CACHE_OPS = "--cache-from $CACHE_FROM --cache-to $CACHE_TO"
+ifdef CI
+CACHE_OPS = --cache-from $(CACHE_FROM) --cache-to $(CACHE_TO)
 endif
 
 .PHONY: package publish

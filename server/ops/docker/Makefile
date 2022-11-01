@@ -2,13 +2,14 @@ BUILDX_AVAILABLE := $(shell docker buildx inspect | grep -i -e running -e amd64 
 
 .PHONY: package publish run
 
+ifdef CI
+CACHE_OPS = --cache-from $(CACHE_FROM) --cache-to $(CACHE_TO)
+endif
+
 default:
 
 package:
 ifeq ($(BUILDX_AVAILABLE), 0)
-ifdef $(CI)
-CACHE_OPS = "--cache-from $CACHE_FROM --cache-to $CACHE_TO"
-endif
 	docker buildx build -f build-static-erd -t kroki-builder-static-erd -o type="image,push=false" $(CACHE_OPS) .
 	docker buildx build -f build-static-svgbob -t kroki-builder-static-svgbob -o type="image,push=false" $(CACHE_OPS) .
 	docker buildx build -f build-static-pikchr -t kroki-builder-static-pikchr -o type="image,push=false" $(CACHE_OPS) .
