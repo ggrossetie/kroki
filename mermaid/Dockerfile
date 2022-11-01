@@ -4,6 +4,7 @@ RUN addgroup -g 1001 kroki && adduser -D -G kroki -u 1001 kroki
 
 RUN apk add --quiet --no-cache --update \
   chromium \
+  font-noto \
   font-noto-cjk
 
 RUN mkdir -p /usr/share/fonts/truetype/google-fonts
@@ -17,8 +18,8 @@ WORKDIR /usr/local/kroki/
 
 ENV KROKI_MERMAID_PAGE_URL=file:///usr/local/kroki/assets/index.html
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/lib/chromium/chrome
-ENV DEBUG="puppeteer:*"
-ENV LEVEL="debug"
+#ENV DEBUG="puppeteer:*"
+ENV LEVEL="info"
 
 COPY --chown=kroki:kroki src ./src
 COPY --chown=kroki:kroki package*.json ./

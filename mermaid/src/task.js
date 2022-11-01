@@ -4,6 +4,7 @@ class Task {
     this.isPng = isPng
     this.mermaidConfig = {
       theme: 'default',
+      fontFamily: '\'Noto Sans\', sans-serif',
       class: {
         useMaxWidth: false
       },
