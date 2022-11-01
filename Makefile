@@ -27,14 +27,6 @@ endif
 	mvn versions:set -DnewVersion=$(RELEASE_VERSION)
 
 buildDockerImages:
-	$(MAKE) -C nomnoml package
-	$(MAKE) -C vega package
-	$(MAKE) -C wavedrom package
-	$(MAKE) -C bytefield package
-	docker images
-	docker buildx ls
-	docker version
-	docker buildx version
 	$(MAKE) -C server package
 	$(MAKE) -C blockdiag package
 	$(MAKE) -C mermaid package
@@ -46,11 +38,6 @@ publishDockerImages:
 ifndef RELEASE_VERSION
 	$(error RELEASE_VERSION is undefined)
 endif
-	$(MAKE) -C nomnoml package
-	$(MAKE) -C vega package
-	$(MAKE) -C wavedrom package
-	$(MAKE) -C bytefield package
-	$(MAKE) -C server/ops/docker package
 	$(MAKE) -C server publish
 	$(MAKE) -C blockdiag publish
 	$(MAKE) -C mermaid publish

@@ -15,6 +15,10 @@ ifeq ($(BUILDX_AVAILABLE), 0)
 	                    -t yuzutech/kroki:jdk11-alpine \
 	                    -t yuzutech/kroki:jdk-11 \
 	                    -t yuzutech/kroki:latest \
+	                    --build-context=nomnoml=../nomnoml \
+	                    --build-context=vega=../vega \
+	                    --build-context=wavedrom=../wavedrom \
+	                    --build-context=bytefield=../bytefield \
 	                    --load $(CACHE_OPS) .
 else
 	docker build -f ops/docker/jdk11-alpine/Dockerfile -t yuzutech/kroki:jdk11-alpine -t yuzutech/kroki:jdk-11 -t yuzutech/kroki:latest .
