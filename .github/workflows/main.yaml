@@ -76,48 +76,11 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-buildx-
 
-    - name: Build nomnoml
-      uses: docker/build-push-action@v3
-      with:
-        context: nomnoml
-        file: nomnoml/ops/docker/alpine/Dockerfile
-        push: false
-        tags: kroki-builder-nomnoml:alpine,kroki-builder-nomnoml:latest
-        cache-from: type=local,src=/tmp/.buildx-cache
-        cache-to: type=local,dest=/tmp/.buildx-cache-new
-
-    - name: Build vega
-      uses: docker/build-push-action@v3
-      with:
-        context: vega
-        file: vega/ops/docker/alpine/Dockerfile
-        push: false
-        tags: kroki-builder-vega:alpine,kroki-builder-vega:latest
-        cache-from: type=local,src=/tmp/.buildx-cache
-        cache-to: type=local,dest=/tmp/.buildx-cache-new
-
-    - name: Build wavedrom
-      uses: docker/build-push-action@v3
-      with:
-        context: wavedrom
-        file: wavedrom/ops/docker/alpine/Dockerfile
-        push: false
-        tags: kroki-builder-wavedrom:alpine,kroki-builder-wavedrom:latest
-        cache-from: type=local,src=/tmp/.buildx-cache
-        cache-to: type=local,dest=/tmp/.buildx-cache-new
-
-    - name: Build bytefield
-      uses: docker/build-push-action@v3
-      with:
-        context: bytefield
-        file: bytefield/ops/docker/alpine/Dockerfile
-        push: false
-        tags: kroki-builder-bytefield:alpine,kroki-builder-bytefield:latest
-        cache-from: type=local,src=/tmp/.buildx-cache
-        cache-to: type=local,dest=/tmp/.buildx-cache-new
-
     - name: Build container images
       run: make buildDockerImages
+      env:
+        CACHE_FROM: 'type=local,src=/tmp/.buildx-cache'
+        CACHE_TO: 'type=local,dest=/tmp/.buildx-cache-new'
 
     - name: 'Setup Node.js 16'
       uses: actions/setup-node@v3
