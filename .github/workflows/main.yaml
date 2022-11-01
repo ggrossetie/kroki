@@ -69,7 +69,7 @@ jobs:
       uses: docker/setup-buildx-action@v2
 
     - name: Cache Docker layers
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: /tmp/.buildx-cache
         key: ${{ runner.os }}-buildx-${{ github.sha }}
@@ -77,7 +77,7 @@ jobs:
           ${{ runner.os }}-buildx-
 
     - name: Build nomnoml
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v3
       with:
         context: nomnoml
         file: nomnoml/ops/docker/alpine/Dockerfile
@@ -87,7 +87,7 @@ jobs:
         cache-to: type=local,dest=/tmp/.buildx-cache-new
 
     - name: Build vega
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v3
       with:
         context: vega
         file: vega/ops/docker/alpine/Dockerfile
@@ -97,7 +97,7 @@ jobs:
         cache-to: type=local,dest=/tmp/.buildx-cache-new
 
     - name: Build wavedrom
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v3
       with:
         context: wavedrom
         file: wavedrom/ops/docker/alpine/Dockerfile
@@ -107,7 +107,7 @@ jobs:
         cache-to: type=local,dest=/tmp/.buildx-cache-new
 
     - name: Build bytefield
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v3
       with:
         context: bytefield
         file: bytefield/ops/docker/alpine/Dockerfile
