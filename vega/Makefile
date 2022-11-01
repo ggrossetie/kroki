@@ -9,7 +9,7 @@ ifeq ($(BUILDX_AVAILABLE), 0)
 ifeq ($(CI), "true")
 CACHE_OPS = "--cache-from $CACHE_FROM --cache-to $CACHE_TO"
 endif
-	docker buildx build -f ops/docker/alpine/Dockerfile -t kroki-builder-vega:alpine -t kroki-builder-vega:latest $(CACHE_OPS) .
+	docker buildx build -f ops/docker/alpine/Dockerfile -t kroki-builder-vega:alpine -t kroki-builder-vega:latest -o type="image,push=false" $(CACHE_OPS) .
 else
 	docker build -f ops/docker/alpine/Dockerfile -t kroki-builder-vega:alpine -t kroki-builder-vega:latest .
 endif
