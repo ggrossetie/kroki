@@ -43,11 +43,11 @@ RUN addgroup -g 1000 kroki && adduser -D -G kroki -u 1000 kroki
 
 COPY --from=kroki-builder-static-svgbob /home/rust/.cargo/bin/svgbob /usr/bin/svgbob
 COPY --from=kroki-builder-static-erd /root/.local/bin/erd /usr/bin/erd
-COPY --from=kroki-builder-nomnoml /app/app.bin /usr/bin/nomnoml
-COPY --from=kroki-builder-vega /app/app.bin /usr/bin/vega
-COPY --from=kroki-builder-vega /app/canvas.node /usr/bin/canvas.node
-COPY --from=kroki-builder-wavedrom /app/app.bin /usr/bin/wavedrom
-COPY --from=kroki-builder-bytefield /app/app.bin /usr/bin/bytefield
+COPY --from=yuzutech/kroki-builder-nomnoml /app/app.bin /usr/bin/nomnoml
+COPY --from=yuzutech/kroki-builder-vega /app/app.bin /usr/bin/vega
+COPY --from=yuzutech/kroki-builder-vega /app/canvas.node /usr/bin/canvas.node
+COPY --from=yuzutech/kroki-builder-wavedrom /app/app.bin /usr/bin/wavedrom
+COPY --from=yuzutech/kroki-builder-bytefield /app/app.bin /usr/bin/bytefield
 COPY --from=kroki-builder-static-pikchr /build/pikchr /usr/bin/pikchr
 
 RUN apk add --update --no-cache \
