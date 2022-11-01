@@ -7,10 +7,10 @@ build:
 
 package:
 ifeq ($(BUILDX_AVAILABLE), 0)
-ifeq ($(CI), "true")
+ifdef $(CI)
 CACHE_OPS = "--cache-from $CACHE_FROM --cache-to $CACHE_TO"
 endif
-	docker buildx build -f ops/docker/jdk11-alpine/Dockerfile -t yuzutech/kroki:jdk11-alpine -t yuzutech/kroki:jdk-11 -t yuzutech/kroki:latest $(CACHE_OPS) .
+	docker buildx build -f ops/docker/jdk11-alpine/Dockerfile -t yuzutech/kroki:jdk11-alpine -t yuzutech/kroki:jdk-11 -t yuzutech/kroki:latest --output=type=docker $(CACHE_OPS) .
 else
 	docker build -f ops/docker/jdk11-alpine/Dockerfile -t yuzutech/kroki:jdk11-alpine -t yuzutech/kroki:jdk-11 -t yuzutech/kroki:latest .
 endif

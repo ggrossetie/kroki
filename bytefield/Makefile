@@ -6,7 +6,7 @@ default:
 
 package:
 ifeq ($(BUILDX_AVAILABLE), 0)
-ifeq ($(CI), "true")
+ifdef $(CI)
 CACHE_OPS = "--cache-from $CACHE_FROM --cache-to $CACHE_TO"
 endif
 	docker buildx build -f ops/docker/alpine/Dockerfile -t kroki-builder-bytefield:alpine -t kroki-builder-bytefield:latest -o type="image,push=false" $(CACHE_OPS) .
