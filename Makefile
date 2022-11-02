@@ -49,6 +49,10 @@ showExamples:
 	$(PYTHON) blockdiag/examples.py
 
 smokeTests:
+	rm -rf .registry/oci && mkdir .registry/oci
+	docker buildx bake --set "*.platform=linux/amd64" kroki-gateway --set="*.output=type=oci,dest=.registry/oci/yuzutech-kroki.tar"
+	mkdir -p .registry/oci/yuzutech-kroki && tar -xvf .registry/oci/yuzutech-kroki.tar -C .registry/oci/yuzutech-kroki
+	skopeo copy oci:.registry/oci/yuzutech-kroki docker-daemon:yuzutech/kroki:smoke-tests
 	@docker-compose --file "$(SMOKE_TESTS_DIR)/docker-compose.yaml" up --build --detach \
 	&& echo \
 	&& docker-compose --file "$(SMOKE_TESTS_DIR)/docker-compose.yaml" ps \
