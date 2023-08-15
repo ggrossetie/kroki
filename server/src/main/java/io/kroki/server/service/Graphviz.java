@@ -86,26 +86,26 @@ public class Graphviz implements DiagramService {
       }
       commander.execute(sourceDecoded.getBytes(), this.vertx.getOrCreateContext(), handler, commands.toArray(new String[0]));
     } catch (InterruptedException e) {
-      handler.handle(new AsyncResult<Buffer>() {
-        @Override
-        public Buffer result() {
-          return null;
-        }
+      handler.handle(new AsyncResult<>() {
+          @Override
+          public Buffer result() {
+              return null;
+          }
 
-        @Override
-        public Throwable cause() {
-          return e;
-        }
+          @Override
+          public Throwable cause() {
+              return e;
+          }
 
-        @Override
-        public boolean succeeded() {
-          return false;
-        }
+          @Override
+          public boolean succeeded() {
+              return false;
+          }
 
-        @Override
-        public boolean failed() {
-          return true;
-        }
+          @Override
+          public boolean failed() {
+              return true;
+          }
       });
     }
   }
