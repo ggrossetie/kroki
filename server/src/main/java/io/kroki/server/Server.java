@@ -1,6 +1,7 @@
 package io.kroki.server;
 
 import io.kroki.server.action.Commander;
+import io.kroki.server.action.NuCommander;
 import io.kroki.server.error.ErrorHandler;
 import io.kroki.server.error.InvalidRequestHandler;
 import io.kroki.server.log.Logging;
@@ -125,7 +126,7 @@ public class Server extends AbstractVerticle {
     registry.register(new Ditaa(vertx, config), "ditaa");
     registry.register(new Blockdiag(vertx, config), "blockdiag", "seqdiag", "actdiag", "nwdiag", "packetdiag", "rackdiag");
     registry.register(new Umlet(vertx, config, commander), "umlet");
-    registry.register(new Graphviz(vertx, config, commander), "graphviz", "dot");
+    registry.register(new Graphviz(vertx, config, new NuCommander(config)), "graphviz", "dot");
     registry.register(new Erd(vertx, config, commander), "erd");
     registry.register(new Svgbob(vertx, config, commander), "svgbob");
     registry.register(new Symbolator(vertx, config), "symbolator");

@@ -1,6 +1,6 @@
 package io.kroki.server.service;
 
-import io.kroki.server.action.Commander;
+import io.kroki.server.action.NuCommander;
 import io.kroki.server.decode.DiagramSource;
 import io.kroki.server.decode.SourceDecoder;
 import io.kroki.server.error.DecodeException;
@@ -11,7 +11,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,9 +22,9 @@ public class Graphviz implements DiagramService {
   private final Vertx vertx;
   private final String binPath;
   private final SourceDecoder sourceDecoder;
-  private final Commander commander;
+  private final NuCommander commander;
 
-  public Graphviz(Vertx vertx, JsonObject config, Commander commander) {
+  public Graphviz(Vertx vertx, JsonObject config, NuCommander commander) {
     this.vertx = vertx;
     this.binPath = config.getString("KROKI_DOT_BIN_PATH", "dot");
     this.sourceDecoder = new SourceDecoder() {
@@ -54,47 +53,60 @@ public class Graphviz implements DiagramService {
 
   @Override
   public void convert(String sourceDecoded, String serviceName, FileFormat fileFormat, JsonObject options, Handler<AsyncResult<Buffer>> handler) {
-    vertx.executeBlocking(future -> {
-      try {
-        byte[] result = dot(sourceDecoded.getBytes(), fileFormat.getName(), options);
-        future.complete(result);
-      } catch (IOException | InterruptedException | IllegalStateException e) {
-        future.fail(e);
+    try {
+      List<String> commands = new ArrayList<>();
+      commands.add(binPath);
+      // Supported format:
+      // canon cmap cmapx cmapx_np dot dot_json eps fig gd gd2 gif gv imap imap_np ismap
+      // jpe jpeg jpg json json0 mp pdf pic plain plain-ext
+      // png pov ps ps2
+      // svg svgz tk vml vmlz vrml wbmp x11 xdot xdot1.2 xdot1.4 xdot_json xlib
+      commands.add("-T" + fileFormat.getName());
+      String scale = options.getString("scale");
+      if (scale != null) {
+        commands.add("-s" + scale);
       }
-    }, res -> handler.handle(res.map(o -> Buffer.buffer((byte[]) o))));
-  }
+      String layout = options.getString("layout");
+      if (layout != null) {
+        commands.add("-K" + layout);
+      }
+      for (String fieldName : options.fieldNames()) {
+        if (fieldName.startsWith("node-attribute-")) {
+          String name = fieldName.replace("node-attribute-", "");
+          commands.add("-N" + name + "=" + options.getString(fieldName));
+        }
+        if (fieldName.startsWith("graph-attribute-")) {
+          String name = fieldName.replace("graph-attribute-", "");
+          commands.add("-G" + name + "=" + options.getString(fieldName));
+        }
+        if (fieldName.startsWith("edge-attribute-")) {
+          String name = fieldName.replace("edge-attribute-", "");
+          commands.add("-E" + name + "=" + options.getString(fieldName));
+        }
+      }
+      commander.execute(sourceDecoded.getBytes(), this.vertx.getOrCreateContext(), handler, commands.toArray(new String[0]));
+    } catch (InterruptedException e) {
+      handler.handle(new AsyncResult<Buffer>() {
+        @Override
+        public Buffer result() {
+          return null;
+        }
 
-  private byte[] dot(byte[] source, String format, JsonObject options) throws IOException, InterruptedException, IllegalStateException {
-    List<String> commands = new ArrayList<>();
-    commands.add(binPath);
-    // Supported format:
-    // canon cmap cmapx cmapx_np dot dot_json eps fig gd gd2 gif gv imap imap_np ismap
-    // jpe jpeg jpg json json0 mp pdf pic plain plain-ext
-    // png pov ps ps2
-    // svg svgz tk vml vmlz vrml wbmp x11 xdot xdot1.2 xdot1.4 xdot_json xlib
-    commands.add("-T" + format);
-    String scale = options.getString("scale");
-    if (scale != null) {
-      commands.add("-s" + scale);
+        @Override
+        public Throwable cause() {
+          return e;
+        }
+
+        @Override
+        public boolean succeeded() {
+          return false;
+        }
+
+        @Override
+        public boolean failed() {
+          return true;
+        }
+      });
     }
-    String layout = options.getString("layout");
-    if (layout != null) {
-      commands.add("-K" + layout);
-    }
-    for (String fieldName : options.fieldNames()) {
-      if (fieldName.startsWith("node-attribute-")) {
-        String name = fieldName.replace("node-attribute-", "");
-        commands.add("-N" + name + "=" + options.getString(fieldName));
-      }
-      if (fieldName.startsWith("graph-attribute-")) {
-        String name = fieldName.replace("graph-attribute-", "");
-        commands.add("-G" + name + "=" + options.getString(fieldName));
-      }
-      if (fieldName.startsWith("edge-attribute-")) {
-        String name = fieldName.replace("edge-attribute-", "");
-        commands.add("-E" + name + "=" + options.getString(fieldName));
-      }
-    }
-    return commander.execute(source, commands.toArray(new String[0]));
   }
 }

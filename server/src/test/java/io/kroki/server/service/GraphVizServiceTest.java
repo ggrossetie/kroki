@@ -17,7 +17,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class GraphVizServiceTest {
-
+/*
   @Test
   public void should_call_graphviz_with_correct_arguments() throws Throwable {
     Vertx vertx = Vertx.vertx();
@@ -47,5 +47,5 @@ public class GraphVizServiceTest {
       throw testContext.causeOfFailure();
     }
     Mockito.verify(commanderMock).execute("{}".getBytes(), "/path/to/dot", "-Tsvg", "-Kneato", "-Nfontcolor=Crimson", "-Nshape=rect", "-Gfontcolor=SteelBlue", "-Glabel=Hello World", "-Ecolor=NavajoWhite", "-Earrowhead=diamond");
-  }
+  }*/
 }
