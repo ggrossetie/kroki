@@ -39,6 +39,7 @@ public class NuCommander {
 
   public void execute(byte[] source, Context context, Handler<AsyncResult<Buffer>> resultHandler, String... cmd) throws InterruptedException {
     NuProcessBuilder pb = new NuProcessBuilder(cmd);
+    // vertx timer to implement timeout if process.isRunning() -> process.destroy(true);
     pb.setProcessListener(new ProcessHandler(resultHandler, commandStatusHandler));
     context.runOnContext(v -> {
       NuProcess process = pb.start();
