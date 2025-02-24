@@ -1,0 +1,311 @@
+openapi: 3.1.0
+info:
+  title: Kroki
+  version: '0.27.0'
+  description: |-
+    Kroki provides a unified API to create diagrams from textual descriptions!
+  license:
+    name: MIT
+    url: https://www.tldrlegal.com/license/mit-license
+  contact:
+    email: hello@kroki.io
+servers:
+  - url: "https://kroki.io"
+    description: Public instance
+tags:
+  - name: diagrams
+    description: Returns a diagram from a textual description
+  - name: metrics
+    description: Returns a list of metrics using [Prometheus Exposition format](https://github.com/prometheus/docs/blob/main/content/docs/instrumenting/exposition_formats.md)
+  - name: health
+    description: Returns a health status including all component versions
+paths:
+  /:
+    post:
+      tags:
+        - diagrams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiagramSourceFormatTypeRequestBody'
+        required: true
+  /{diagramType}:
+    post:
+      tags:
+        - diagrams
+      parameters:
+        - name: diagramType
+          in: path
+          description: Type of diagram
+          required: true
+          schema:
+            $ref: '#/components/schemas/DiagramType'
+        - name: Accept
+          in: header
+          description: Output format
+          schema:
+            type: string
+            enum:
+              - image/svg+xml
+              - image/png
+              - image/jpeg
+              - application/pdf
+              - text/plain; charset=x-user-defined
+              - text/plain
+              - text/plain; charset=utf-8
+          required: false
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiagramSourceFormatRequestBody'
+          text/plain:
+            schema:
+              $ref: '#/components/schemas/DiagramSource'
+        required: true
+  /{diagramType}/{outputFormat}:
+    post:
+      tags:
+        - diagrams
+      parameters:
+        - name: diagramType
+          in: path
+          description: Type of diagram
+          required: true
+          schema:
+            $ref: '#/components/schemas/DiagramType'
+        - name: outputFormat
+          in: path
+          description: Output format
+          required: true
+          schema:
+            $ref: '#/components/schemas/OutputFormat'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiagramSourceRequestBody'
+        required: true
+  /{diagramType}/{outputFormat}/{sourceEncoded}:
+    get:
+      tags:
+        - diagrams
+      parameters:
+        - name: diagramType
+          in: path
+          description: Type of diagram
+          required: true
+          schema:
+            $ref: '#/components/schemas/DiagramType'
+        - name: outputFormat
+          in: path
+          description: Output format
+          required: true
+          schema:
+            $ref: '#/components/schemas/OutputFormat'
+        - name: sourceEncoded
+          in: path
+          description: Diagram definition encoded using a deflate + base64 algorithm
+          required: true
+          schema:
+            type: string
+
+  /metrics:
+    get:
+      tags:
+        - metrics
+      responses:
+        200:
+          description: "OK"
+          content:
+            text/plain; version=0.0.4:
+              example: |-
+                # HELP kroki_worker_thread_blocked_percentage The percentage of worker thread blocked.
+                # TYPE kroki_worker_thread_blocked_percentage gauge
+                kroki_worker_thread_blocked_percentage 0 1740410517406
+  
+                # HELP kroki_event_loop_thread_blocked_percentage The percentage of event loop thread blocked.
+                # TYPE kroki_event_loop_thread_blocked_percentage gauge
+                kroki_event_loop_thread_blocked_percentage 0 1740410517406
+
+  /health:
+    tags:
+      - health
+    $ref: '#/components/pathItems/health'
+  /v1/health:
+    tags:
+      - health
+    $ref: '#/components/pathItems/health'
+  /healthz:
+    tags:
+      - health
+    $ref: '#/components/pathItems/health'
+
+components:
+  pathItems:
+    health:
+      get:
+        responses:
+          200:
+            description: "OK"
+            content:
+              application/health+json:
+                schema:
+                  $ref: '#/components/schemas/HealthResponse'
+  schemas:
+    DiagramSourceFormatTypeRequestBody:
+      type: object
+      properties:
+        diagram_source:
+          $ref: '#/components/schemas/DiagramSource'
+        output_format:
+          $ref: '#/components/schemas/OutputFormat'
+        diagram_type:
+          $ref: '#/components/schemas/DiagramType'
+    DiagramSourceFormatRequestBody:
+      type: object
+      properties:
+        diagram_source:
+          $ref: '#/components/schemas/DiagramSource'
+        output_format:
+          $ref: '#/components/schemas/OutputFormat'
+    DiagramSourceRequestBody:
+      type: object
+      properties:
+        diagram_source:
+          $ref: '#/components/schemas/DiagramSource'
+    DiagramSource:
+      type: string
+      description: Diagram source
+      examples: [ "digraph G {Hello->World}" ]
+    DiagramType:
+      type: string
+      description: Diagram type
+      examples: [ plantuml ]
+      enum:
+        - plantuml
+        - c4plantuml
+        - ditaa
+        - blockdiag
+        - seqdiag
+        - actdiag
+        - nwdiag
+        - packetdiag
+        - rackdiag
+        - umlet
+        - erd
+        - svgbob
+        - symbolator
+        - nomnoml
+        - mermaid
+        - vega
+        - vegalite
+        - wavedrom
+        - bpmn
+        - bytefield
+        - excalidraw
+        - pikchr
+        - structurizr
+        - diagramsnet
+        - d2
+        - tikz
+        - dbml
+        - wireviz
+    OutputFormat:
+      type: string
+      description: Output format
+      examples: [ svg ]
+      enum:
+        - png
+        - svg
+        - jpeg
+        - pdf
+        - base64
+        - txt
+        - utxt
+    Version:
+      type: string
+      description: Version number
+      examples: [ 1.2.3, 1.2025.3, 7269f78c4a ]
+    BuildHash:
+      type: string
+      description: Build short SHA1
+      examples: [ d61308c ]
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - pass
+        version:
+          type: object
+          properties:
+            kroki:
+              type: object
+              properties:
+                number:
+                  $ref: '#/components/schemas/Version'
+                build_hash:
+                  $ref: '#/components/schemas/BuildHash'
+            actdiag:
+              $ref: '#/components/schemas/Version'
+            bpmn:
+              $ref: '#/components/schemas/Version'
+            pikchr:
+              $ref: '#/components/schemas/Version'
+            nwdiag:
+              $ref: '#/components/schemas/Version'
+            c4plantuml:
+              $ref: '#/components/schemas/Version'
+            rackdiag:
+              $ref: '#/components/schemas/Version'
+            dot:
+              $ref: '#/components/schemas/Version'
+            symbolator:
+              $ref: '#/components/schemas/Version'
+            d2:
+              $ref: '#/components/schemas/Version'
+            tikz:
+              $ref: '#/components/schemas/Version'
+            mermaid:
+              $ref: '#/components/schemas/Version'
+            erd:
+              $ref: '#/components/schemas/Version'
+            graphviz:
+              $ref: '#/components/schemas/Version'
+            vegalite:
+              $ref: '#/components/schemas/Version'
+            ditaa:
+              $ref: '#/components/schemas/Version'
+            umlet:
+              $ref: '#/components/schemas/Version'
+            diagramsnet:
+              $ref: '#/components/schemas/Version'
+            plantuml:
+              $ref: '#/components/schemas/Version'
+            seqdiag:
+              $ref: '#/components/schemas/Version'
+            nomnoml:
+              $ref: '#/components/schemas/Version'
+            wavedrom:
+              $ref: '#/components/schemas/Version'
+            structurizr:
+              $ref: '#/components/schemas/Version'
+            bytefield:
+              $ref: '#/components/schemas/Version'
+            wireviz:
+              $ref: '#/components/schemas/Version'
+            excalidraw:
+              $ref: '#/components/schemas/Version'
+            dbml:
+              $ref: '#/components/schemas/Version'
+            packetdiag:
+              $ref: '#/components/schemas/Version'
+            svgbob:
+              $ref: '#/components/schemas/Version'
+            vega:
+              $ref: '#/components/schemas/Version'
+            blockdiag:
+              $ref: '#/components/schemas/Version'
