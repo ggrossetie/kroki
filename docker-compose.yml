@@ -1,0 +1,15 @@
+services:
+  kroki:
+    image: yuzutech/kroki:latest
+    depends_on:
+      - mermaid
+    environment:
+      - KROKI_MERMAID_HOST=mermaid
+    ports:
+      - "8000:8000"
+
+  mermaid:
+    image: yuzutech/kroki-mermaid:latest
+    container_name: kroki-mermaid
+    expose:
+      - "8002"

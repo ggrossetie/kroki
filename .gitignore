@@ -7,3 +7,5 @@ target/
 dependency-reduced-pom.xml
 .idea
 **/.vscode
+/perf-results/
+/perf-run.log
