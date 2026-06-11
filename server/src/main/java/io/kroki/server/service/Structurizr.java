@@ -19,11 +19,15 @@ import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class Structurizr implements DiagramService {
@@ -37,21 +41,45 @@ public class Structurizr implements DiagramService {
   // same as PlantUML since we convert Structurizr DSL to PlantUML
   private static final List<FileFormat> SUPPORTED_FORMATS = Arrays.asList(FileFormat.PNG, FileFormat.SVG, FileFormat.PDF, FileFormat.BASE64, FileFormat.TXT, FileFormat.UTXT);
 
-  private static final StructurizrTheme defaultTheme = readTheme("structurizr/default.json");
-  private static final StructurizrTheme awsTheme2020 = readTheme("structurizr/amazon-web-services-2020.04.30.json");
-  private static final StructurizrTheme awsTheme2022 = readTheme("structurizr/amazon-web-services-2022.04.30.json");
-  private static final StructurizrTheme awsTheme2023 = readTheme("structurizr/amazon-web-services-2023.01.31.json");
-  private static final StructurizrTheme gcpTheme = readTheme("structurizr/google-cloud-platform.json");
-  private static final StructurizrTheme k8sTheme = readTheme("structurizr/kubernetes.json");
-  private static final StructurizrTheme azureTheme2021 = readTheme("structurizr/microsoft-azure-2021.01.26.json");
-  private static final StructurizrTheme azureTheme2023 = readTheme("structurizr/microsoft-azure-2023.01.24.json");
-  private static final StructurizrTheme oracleCloudTheme2021 = readTheme("structurizr/oracle-cloud-infrastructure-2021.04.30.json");
-  private static final StructurizrTheme oracleCloudTheme2023 = readTheme("structurizr/oracle-cloud-infrastructure-2023.04.01.json");
+  private static final List<String> THEME_BASE_URLS = Arrays.asList(
+    "https://static.structurizr.com/themes/",
+    "https://playground.structurizr.com/static/themes/"
+  );
+
+  // Themes bundled with their icons inlined as data URIs so that conversions do not
+  // depend on network access (see ci/tasks/update-structurizr-themes.js).
+  // Loaded lazily because they weigh ~30MiB.
+  private static final List<String> BUNDLED_THEME_NAMES = Arrays.asList(
+    "default",
+    "amazon-web-services-2023.01",
+    "amazon-web-services-2025.07",
+    "google-cloud-platform-v1.5",
+    "google-cloud-platform-2025.09",
+    "kubernetes",
+    "microsoft-azure-2024.07",
+    "microsoft-azure-2025.11",
+    "oracle-cloud-infrastructure-2021.04",
+    "oracle-cloud-infrastructure-2023.04"
+  );
+
+  // When a theme cannot be fetched, fall back to the latest bundled version of the provider.
+  private static final Map<String, String> PROVIDER_LATEST_THEME_NAMES = createProviderLatestThemeNames();
+
+  private static final Map<String, StructurizrTheme> themesCache = new ConcurrentHashMap<>();
+
+  private static Map<String, String> createProviderLatestThemeNames() {
+    Map<String, String> providers = new LinkedHashMap<>();
+    providers.put("amazon-web-services", "amazon-web-services-2025.07");
+    providers.put("google-cloud-platform", "google-cloud-platform-2025.09");
+    providers.put("microsoft-azure", "microsoft-azure-2025.11");
+    providers.put("oracle-cloud-infrastructure", "oracle-cloud-infrastructure-2023.04");
+    return providers;
+  }
 
   public Structurizr(Vertx vertx, JsonObject config) {
     this.vertx = vertx;
     this.safeMode = SafeMode.get(config.getString("KROKI_STRUCTURIZR_SAFE_MODE", config.getString("KROKI_SAFE_MODE", "secure")), SafeMode.SECURE);
-    this.structurizrPlantUMLExporter = new StructurizrPlantUMLExporter();
+    this.structurizrPlantUMLExporter = new DataUriAwareStructurizrPlantUMLExporter();
     this.sourceDecoder = new SourceDecoder() {
       @Override
       public String decode(String encoded) throws DecodeException {
@@ -62,14 +90,7 @@ public class Structurizr implements DiagramService {
   }
 
   protected static PlantumlCommand createPlantumlCommand(SafeMode safeMode, JsonObject config) {
-    String allowListUrl = config.getString("KROKI_PLANTUML_ALLOWLIST_URL");
     JsonObject plantumlConfig = config.copy();
-    if (allowListUrl != null) {
-      allowListUrl += ";https://static.structurizr.com";
-    } else {
-      allowListUrl = "https://static.structurizr.com";
-    }
-    plantumlConfig.put("KROKI_PLANTUML_ALLOWLIST_URL", allowListUrl);
     String plantumlSecurityProfile = plantumlConfig.getString("KROKI_PLANTUML_SECURITY_PROFILE");
     if (plantumlSecurityProfile == null && safeMode.value >= SafeMode.SECURE.value) {
       plantumlConfig.put("KROKI_PLANTUML_SECURITY_PROFILE", "ALLOWLIST");
@@ -131,13 +152,13 @@ public class Structurizr implements DiagramService {
         selectedView = views.iterator().next();
       }
       for (String url : viewSet.getConfiguration().getThemes()) {
-        if (url.startsWith("https://static.structurizr.com/themes/")) {
+        if (url.equalsIgnoreCase("default")) {
+          applyTheme(viewSet, getBundledTheme("default"));
+        } else if (THEME_BASE_URLS.stream().anyMatch(url::startsWith)) {
           StructurizrTheme theme = getThemeContent(url);
           if (theme != null) {
             applyTheme(viewSet, theme);
           }
-        } else if (url.equalsIgnoreCase("default")) {
-          applyTheme(viewSet, defaultTheme);
         }
       }
       final Diagram diagram;
@@ -218,39 +239,21 @@ public class Structurizr implements DiagramService {
     }
   }
 
+  private static StructurizrTheme getBundledTheme(String name) {
+    return themesCache.computeIfAbsent(name, key -> readTheme("structurizr/" + key + ".json"));
+  }
+
   private static StructurizrTheme getThemeContent(String url) {
-    if (url.contains("default")) {
-      return defaultTheme;
+    for (String name : BUNDLED_THEME_NAMES) {
+      if (url.contains(name)) {
+        return getBundledTheme(name);
+      }
     }
-    if (url.contains("amazon-web-services-2020.04.30")) {
-      return awsTheme2020;
-    }
-    if (url.contains("amazon-web-services-2022.04.30")) {
-      return awsTheme2022;
-    }
-    if (url.contains("amazon-web-services")) {
-      // default, latest version 2023.01.30
-      return awsTheme2023;
-    }
-    if (url.contains("google-cloud-platform")) {
-      return gcpTheme;
-    }
-    if (url.contains("kubernetes")) {
-      return k8sTheme;
-    }
-    if (url.contains("microsoft-azure-2021.01.26")) {
-      return azureTheme2021;
-    }
-    if (url.contains("microsoft-azure")) {
-      // default, latest version 2023.01.24
-      return azureTheme2023;
-    }
-    if (url.contains("oracle-cloud-infrastructure-2021.04.30")) {
-      return oracleCloudTheme2021;
-    }
-    if (url.contains("oracle-cloud-infrastructure")) {
-      // default, latest version 2023.04.01
-      return oracleCloudTheme2023;
+    // version not bundled: fall back to the latest bundled version of the provider
+    for (Map.Entry<String, String> provider : PROVIDER_LATEST_THEME_NAMES.entrySet()) {
+      if (url.contains(provider.getKey())) {
+        return getBundledTheme(provider.getValue());
+      }
     }
     return null;
   }
@@ -342,5 +345,37 @@ class StructurizrTheme {
       // ignore!
       return null;
     }
+  }
+}
+
+/**
+ * The upstream exporter only emits icons that start with "http" and downloads them
+ * to compute their scale. The themes bundled with Kroki inline icons as data URIs,
+ * so accept them and read the image dimensions from the decoded bytes instead.
+ */
+class DataUriAwareStructurizrPlantUMLExporter extends StructurizrPlantUMLExporter {
+
+  private static final String DATA_IMAGE_PREFIX = "data:image/";
+
+  @Override
+  protected boolean isSupportedIcon(String icon) {
+    return super.isSupportedIcon(icon) || (icon != null && icon.startsWith(DATA_IMAGE_PREFIX));
+  }
+
+  @Override
+  protected double calculateIconScale(String icon, int maxIconSize) {
+    if (icon != null && icon.startsWith(DATA_IMAGE_PREFIX)) {
+      try {
+        String base64 = icon.substring(icon.indexOf(',') + 1);
+        BufferedImage image = ImageIO.read(new ByteArrayInputStream(Base64.getDecoder().decode(base64)));
+        if (image != null) {
+          return ((double) maxIconSize) / Math.max(image.getWidth(), image.getHeight());
+        }
+      } catch (RuntimeException | IOException e) {
+        // ignore: use the default scale
+      }
+      return 0.5;
+    }
+    return super.calculateIconScale(icon, maxIconSize);
   }
 }

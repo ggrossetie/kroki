@@ -1,6 +1,5 @@
 package io.kroki.server.service;
 
-import com.structurizr.export.plantuml.StructurizrPlantUMLExporter;
 import io.kroki.server.DownloadPlantumlNativeImage;
 import io.kroki.server.error.BadRequestException;
 import io.kroki.server.format.FileFormat;
@@ -70,7 +69,7 @@ public class StructurizrServiceTest {
   private String convert(String sourceFilename,
                          SafeMode safeMode,
                          JsonObject options) throws IOException, InterruptedException {
-    byte[] result = Structurizr.convert(readTestResource(sourceFilename), FileFormat.SVG, plantumlCommand, new StructurizrPlantUMLExporter(), safeMode, options);
+    byte[] result = Structurizr.convert(readTestResource(sourceFilename), FileFormat.SVG, plantumlCommand, new DataUriAwareStructurizrPlantUMLExporter(), safeMode, options);
     return stripPlantUMLComments(new String(result));
   }
 

@@ -11,7 +11,7 @@ workspace "Amazon Web Services Example" "An example AWS deployment architecture.
         live = deploymentEnvironment "Live" {
 
             deploymentNode "Amazon Web Services" {
-                tags "Amazon Web Services - Cloud"
+                tags "Amazon Web Services - AWS Cloud"
 
                 region = deploymentNode "US-East-1" {
                     tags "Amazon Web Services - Region"
@@ -23,7 +23,7 @@ workspace "Amazon Web Services Example" "An example AWS deployment architecture.
 
                     elb = infrastructureNode "Elastic Load Balancer" {
                         description "Automatically distributes incoming application traffic."
-                        tags "Amazon Web Services - Elastic Load Balancing"
+                        tags "Amazon Web Services - Load Balancing"
                     }
 
                     deploymentNode "Autoscaling group" {
@@ -40,7 +40,7 @@ workspace "Amazon Web Services Example" "An example AWS deployment architecture.
                         tags "Amazon Web Services - RDS"
 
                         deploymentNode "MySQL" {
-                            tags "Amazon Web Services - RDS MySQL instance"
+                            tags "Amazon Web Services - Database"
 
                             databaseInstance = containerInstance database
                         }
@@ -80,7 +80,7 @@ workspace "Amazon Web Services Example" "An example AWS deployment architecture.
             }
         }
 
-        themes "https://static.structurizr.com/themes/amazon-web-services-2020.04.30/theme.json"
+        themes "https://playground.structurizr.com/static/themes/amazon-web-services-2025.07/theme.json"
     }
 
 }
