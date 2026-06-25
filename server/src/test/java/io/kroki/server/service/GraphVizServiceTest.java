@@ -39,4 +39,35 @@ public class GraphVizServiceTest {
     assertThat(buffer.toString()).isEqualTo("<svg>graphviz</svg>");
     Mockito.verify(commanderMock).execute("{}".getBytes(), "/path/to/dot", "-Tsvg", "-Kneato", "-Nfontcolor=Crimson", "-Nshape=rect", "-Gfontcolor=SteelBlue", "-Glabel=Hello World", "-Ecolor=NavajoWhite", "-Earrowhead=diamond");
   }
+
+  @Test
+  public void should_inject_dark_palette_when_color_scheme_is_dark() throws Throwable {
+    Vertx vertx = Vertx.vertx();
+    Commander commanderMock = mock(Commander.class);
+    when(commanderMock.execute(any(), any(String[].class))).thenReturn("<svg>graphviz</svg>".getBytes());
+    Graphviz graphvizService = new Graphviz(vertx, new JsonObject(), commanderMock);
+    JsonObject options = new JsonObject();
+    options.put("color-scheme", "dark");
+    // an explicit attribute must win over the synthesized default
+    options.put("graph-attribute-bgcolor", "black");
+    graphvizService.convert("{}", "graphviz", FileFormat.SVG, options).await(2, TimeUnit.SECONDS);
+    Mockito.verify(commanderMock).execute("{}".getBytes(), "dot", "-Tsvg",
+      "-Ncolor=#c9d1d9", "-Nfontcolor=#c9d1d9", "-Ecolor=#c9d1d9", "-Efontcolor=#c9d1d9",
+      "-Gbgcolor=black");
+  }
+
+  @Test
+  public void should_inject_media_query_when_color_scheme_is_auto() throws Throwable {
+    Vertx vertx = Vertx.vertx();
+    Commander commanderMock = mock(Commander.class);
+    when(commanderMock.execute(any(), any(String[].class))).thenReturn("<svg width=\"1\"><g/></svg>".getBytes());
+    Graphviz graphvizService = new Graphviz(vertx, new JsonObject(), commanderMock);
+    JsonObject options = new JsonObject().put("color-scheme", "auto");
+    Buffer buffer = graphvizService.convert("{}", "graphviz", FileFormat.SVG, options).await(2, TimeUnit.SECONDS);
+    assertThat(buffer.toString())
+      .contains("@media (prefers-color-scheme:dark)")
+      .startsWith("<svg width=\"1\"><style>");
+    // no graphviz palette arguments are added for auto
+    Mockito.verify(commanderMock).execute("{}".getBytes(), "dot", "-Tsvg");
+  }
 }

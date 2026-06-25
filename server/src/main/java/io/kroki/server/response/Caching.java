@@ -45,6 +45,14 @@ public class Caching {
   }
 
   void addHeaderForCache(HttpServerResponse response, String data, long today) {
+    addHeaderForCache(response, data.getBytes(StandardCharsets.UTF_8), today);
+  }
+
+  public void addHeaderForCache(HttpServerResponse response, byte[] data) {
+    addHeaderForCache(response, data, System.currentTimeMillis());
+  }
+
+  void addHeaderForCache(HttpServerResponse response, byte[] data, long today) {
     final int maxAge = 3600 * 24 * 5;
     // Add http headers to force the browser to cache the image
     response.putHeader(HttpHeaders.EXPIRES, httpDate(today + 1000L * maxAge));
@@ -61,11 +69,11 @@ public class Caching {
     return httpHeaderFormatter.format(Instant.ofEpochMilli(millis));
   }
 
-  private String internalEtag(String data) {
+  private String internalEtag(byte[] data) {
     try {
       final AsciiEncoder coder = new AsciiEncoder();
       final MessageDigest msgDigest = MessageDigest.getInstance("MD5");
-      msgDigest.update(data.getBytes(StandardCharsets.UTF_8));
+      msgDigest.update(data);
       final byte[] digest = msgDigest.digest();
       return coder.encode(digest);
     } catch (Exception e) {

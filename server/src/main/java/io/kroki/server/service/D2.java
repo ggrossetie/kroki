@@ -86,6 +86,9 @@ public class D2 implements DiagramService {
     });
   }
 
+  // Default D2 dark theme ("dark-mauve", id 200) used to back the unified color-scheme option.
+  private static final String DEFAULT_DARK_THEME = "dark-mauve";
+
   private byte[] d2(byte[] source, JsonObject options) throws IOException, InterruptedException, IllegalStateException {
     List<String> commands = new ArrayList<>();
     commands.add(binPath);
@@ -94,7 +97,18 @@ public class D2 implements DiagramService {
       // Only pass the layout argument if the ELK layout engine is requested (default is 'dagre')
       commands.add("--layout=" + layout);
     }
+    ColorScheme colorScheme = ColorScheme.from(options);
     String theme = options.getString("theme");
+    String darkTheme = options.getString("dark-theme");
+    // color-scheme provides defaults only; an explicit theme/dark-theme option always wins.
+    // - dark: render a fixed dark image by defaulting the (light) theme to a dark one.
+    // - auto: let D2 emit an SVG with a prefers-color-scheme media query by defaulting dark-theme.
+    if (colorScheme == ColorScheme.DARK && theme == null) {
+      theme = DEFAULT_DARK_THEME;
+    }
+    if (colorScheme == ColorScheme.AUTO && darkTheme == null) {
+      darkTheme = DEFAULT_DARK_THEME;
+    }
     if (theme != null) {
       int themeId = 0;
       Integer builtinThemeId = builtinThemes.get(theme.toLowerCase().replaceAll("\\s", "-"));
@@ -109,7 +123,6 @@ public class D2 implements DiagramService {
       }
       commands.add("--theme=" + themeId);
     }
-    String darkTheme = options.getString("dark-theme");
     if (darkTheme != null) {
       int themeId = 0;
       Integer builtinThemeId = builtinThemes.get(darkTheme.toLowerCase().replaceAll("\\s", "-"));

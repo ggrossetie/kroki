@@ -1,5 +1,39 @@
 = Diagram Options
 
+== Color scheme (dark mode)
+
+The unified `color-scheme` option requests a light or dark rendering across diagram types.
+It is available like any other diagram option (query parameter, `Kroki-Diagram-Options-Color-Scheme` header or `diagram_options` JSON field).
+
+[cols="1m,1a,2a",opts="header"]
+|===
+|Name
+|Allowable Values
+|Description
+
+|color-scheme
+|
+* `light` (default)
+* `dark`
+* `auto`
+|`light` keeps the current rendering. +
+`dark` produces a dark image (dark background, light strokes and text). +
+`auto` produces, when supported, a single SVG that adapts to the viewer via a `@media (prefers-color-scheme: dark)` query; otherwise it falls back to `light`.
+|===
+
+NOTE: `color-scheme` only provides defaults. A diagram-specific option set explicitly by the caller (for example D2 `theme`/`dark-theme`, Mermaid `theme` or Graphviz `graph-attribute-*`) always takes precedence, as do colors hard-coded in the diagram source.
+
+Support is implemented per diagram type. The currently supported types are:
+
+[cols="1m,1,3",opts="header"]
+|===
+|Diagram |Level |Notes
+
+|d2 |native |`dark` defaults the theme to a dark one; `auto` emits an adaptive SVG via D2's `--dark-theme`.
+|mermaid |themed |`dark` maps to Mermaid's `dark` theme; `auto` degrades to `light` (Mermaid has no adaptive output).
+|graphviz / dot |palette |`dark` synthesizes a dark palette via graph/node/edge color attributes; `auto` injects a `prefers-color-scheme` media query (SVG only).
+|===
+
 == BlockDiag
 
 Applies to `blockdiag`, `seqdiag`, `actdiag`, `nwdiag`, `packetdiag` and `rackdiag`:

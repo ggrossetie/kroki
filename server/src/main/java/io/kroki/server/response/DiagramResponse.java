@@ -16,7 +16,10 @@ public class DiagramResponse {
 
   public void end(HttpServerResponse response, String source, String contentType, Buffer buffer) {
     if (caching != null) {
-      caching.addHeaderForCache(response, source);
+      // Hash the rendered output (not just the source) so any rendering option that changes
+      // the image - color-scheme, theme, scale... - yields a distinct ETag. Otherwise a
+      // conditional request could get a 304 with the wrong variant.
+      caching.addHeaderForCache(response, buffer.getBytes());
     }
     response
       .putHeader(HttpHeaders.CONTENT_TYPE, contentType)
