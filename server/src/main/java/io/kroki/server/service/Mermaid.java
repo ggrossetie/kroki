@@ -54,6 +54,12 @@ public class Mermaid implements DiagramService {
   }
 
   @Override
+  public List<ColorScheme> getSupportedColorSchemes() {
+    // mermaid has no prefers-color-scheme aware output, so AUTO is not advertised (degrades to light).
+    return List.of(ColorScheme.LIGHT, ColorScheme.DARK);
+  }
+
+  @Override
   public Future<Buffer> convert(String sourceDecoded, String serviceName, FileFormat fileFormat, JsonObject options) {
     JsonObject effectiveOptions;
     try {

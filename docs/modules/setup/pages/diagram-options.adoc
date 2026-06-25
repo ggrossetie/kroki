@@ -30,9 +30,13 @@ Support is implemented per diagram type. The currently supported types are:
 |Diagram |Level |Notes
 
 |d2 |native |`dark` defaults the theme to a dark one; `auto` emits an adaptive SVG via D2's `--dark-theme`.
-|mermaid |themed |`dark` maps to Mermaid's `dark` theme; `auto` degrades to `light` (Mermaid has no adaptive output).
 |graphviz / dot |palette |`dark` synthesizes a dark palette via graph/node/edge color attributes; `auto` injects a `prefers-color-scheme` media query (SVG only).
+|mermaid |themed |`dark` maps to Mermaid's `dark` theme; `auto` degrades to `light` (Mermaid has no adaptive output).
+|plantuml / c4plantuml |themed |`dark` defaults to the `cyborg` theme; `auto` degrades to `light`.
+|svgbob |palette |`dark` synthesizes a dark background and light ink; `auto` degrades to `light`.
 |===
+
+The set of color schemes honored by each diagram type is also advertised on the `/health` endpoint under the `color_scheme` key (only diagram types that support more than `light` are listed), so clients can discover dark-mode support at runtime.
 
 == BlockDiag
 

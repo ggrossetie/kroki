@@ -185,6 +185,27 @@ public class Plantuml implements DiagramService {
     return "1.2026.6";
   }
 
+  // Built-in PlantUML dark theme backing the unified color-scheme option.
+  private static final String DEFAULT_DARK_THEME = "cyborg";
+
+  @Override
+  public List<ColorScheme> getSupportedColorSchemes() {
+    // PlantUML has no prefers-color-scheme aware output, so AUTO is not advertised (degrades to light).
+    return List.of(ColorScheme.LIGHT, ColorScheme.DARK);
+  }
+
+  /**
+   * Resolves the effective PlantUML theme: an explicit {@code theme} option always wins, otherwise
+   * {@code color-scheme=dark} defaults to a dark theme. Returns {@code null} when no theme applies.
+   */
+  static String resolveTheme(JsonObject options) {
+    String theme = options.getString("theme");
+    if ((theme == null || theme.trim().isEmpty()) && ColorScheme.from(options) == ColorScheme.DARK) {
+      return DEFAULT_DARK_THEME;
+    }
+    return theme;
+  }
+
   @Override
   public Future<Buffer> convert(String sourceDecoded, String serviceName, FileFormat fileFormat, JsonObject options) {
     String source;
@@ -213,7 +234,7 @@ public class Plantuml implements DiagramService {
       // ...otherwise, continue with PlantUML
       return vertx.executeBlocking(() -> {
         String sourceWithTheme = primeSource;
-        String theme = options.getString("theme");
+        String theme = resolveTheme(options);
         if (theme != null && !theme.trim().isEmpty()) {
           // add !theme directive just after the @start directive
           sourceWithTheme = START_BLOCK_RX.matcher(primeSource).replaceAll("$1!theme " + theme + "\n");

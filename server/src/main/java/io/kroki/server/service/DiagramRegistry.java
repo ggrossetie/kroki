@@ -80,4 +80,12 @@ public class DiagramRegistry {
       return Map.entry(diagramName, diagramVersion);
     }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
+
+  public Map<String, List<String>> getColorSchemes() {
+    return registry.entrySet().stream().collect(Collectors.toMap(
+      Map.Entry::getKey,
+      registryEntry -> registryEntry.getValue().getService().getSupportedColorSchemes().stream()
+        .map(colorScheme -> colorScheme.name().toLowerCase())
+        .collect(Collectors.toList())));
+  }
 }

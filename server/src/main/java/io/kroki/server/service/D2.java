@@ -79,6 +79,11 @@ public class D2 implements DiagramService {
   }
 
   @Override
+  public List<ColorScheme> getSupportedColorSchemes() {
+    return List.of(ColorScheme.LIGHT, ColorScheme.DARK, ColorScheme.AUTO);
+  }
+
+  @Override
   public Future<Buffer> convert(String sourceDecoded, String serviceName, FileFormat fileFormat, JsonObject options) {
     return vertx.executeBlocking(() -> {
       byte[] result = d2(sourceDecoded.getBytes(), options);

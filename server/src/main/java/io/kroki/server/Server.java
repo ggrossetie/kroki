@@ -130,7 +130,7 @@ public class Server extends AbstractVerticle {
     router.get("/metrics")
       .handler(metricHandlerService);
     // health
-    HealthHandler healthHandler = new HealthHandler(registry.getVersions(), blockedThreadChecker);
+    HealthHandler healthHandler = new HealthHandler(registry.getVersions(), registry.getColorSchemes(), blockedThreadChecker);
     Handler<RoutingContext> healthHandlerService = healthHandler.create();
     router.get("/health")
       .handler(healthHandlerService);

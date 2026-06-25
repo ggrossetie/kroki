@@ -51,6 +51,16 @@ public class Svgbob implements DiagramService {
     return "0.7.6";
   }
 
+  // svgbob has no native theme, so the unified color-scheme option synthesizes a palette.
+  private static final String DARK_BG = "#1e1e1e";
+  private static final String DARK_FG = "#c9d1d9";
+
+  @Override
+  public List<ColorScheme> getSupportedColorSchemes() {
+    // svgbob has no prefers-color-scheme aware output, so AUTO is not advertised (degrades to light).
+    return List.of(ColorScheme.LIGHT, ColorScheme.DARK);
+  }
+
   @Override
   public Future<Buffer> convert(String sourceDecoded, String serviceName, FileFormat fileFormat, JsonObject options) {
     return vertx.executeBlocking(() -> {
@@ -62,6 +72,15 @@ public class Svgbob implements DiagramService {
   private byte[] svgbob(byte[] source, JsonObject options) throws IOException, InterruptedException, IllegalStateException {
     List<String> commands = new ArrayList<>();
     commands.add(binPath);
+    if (ColorScheme.from(options) == ColorScheme.DARK) {
+      // color-scheme provides defaults; explicit background/fill-color options below always win.
+      if (options.getString("background") == null) {
+        commands.add("--background=" + DARK_BG);
+      }
+      if (options.getString("fill-color") == null) {
+        commands.add("--fill-color=" + DARK_FG);
+      }
+    }
     addOption("background", options, commands);
     addOption("fill-color", options, commands);
     addOption("font-family", options, commands);
