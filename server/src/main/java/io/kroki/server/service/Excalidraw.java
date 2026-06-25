@@ -51,6 +51,12 @@ public class Excalidraw implements DiagramService {
   }
 
   @Override
+  public List<ColorScheme> getSupportedColorSchemes() {
+    // The companion maps color-scheme=dark to Excalidraw's exportWithDarkMode; auto degrades to light.
+    return List.of(ColorScheme.LIGHT, ColorScheme.DARK);
+  }
+
+  @Override
   public Future<Buffer> convert(String sourceDecoded, String serviceName, FileFormat fileFormat, JsonObject options) {
     String requestURI = "/" + serviceName + "/" + fileFormat.getName();
     Future<HttpResponse<Buffer>> httpResponseFuture = this.delegator.delegate(host, port, requestURI, sourceDecoded, options);

@@ -51,7 +51,10 @@ import { getBrowserWSEndpoint } from './browser-instance.js'
       })
       if (diagramSource) {
         try {
-          const svg = await worker.convert(new Task(diagramSource))
+          // Unified color-scheme option: dark enables Excalidraw's dark export, auto/light keep light.
+          const exportWithDarkMode =
+            (url.searchParams.get('color-scheme') || '').toLowerCase() === 'dark'
+          const svg = await worker.convert(new Task(diagramSource, exportWithDarkMode))
           res.setHeader('Content-Type', 'image/svg+xml')
           return micro.send(res, 200, svg)
         } catch (err) {

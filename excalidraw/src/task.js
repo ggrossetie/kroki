@@ -1,5 +1,6 @@
 export default class Task {
-  constructor(source) {
+  constructor(source, exportWithDarkMode = false) {
     this.source = source
+    this.exportWithDarkMode = exportWithDarkMode
   }
 }

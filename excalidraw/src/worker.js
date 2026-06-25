@@ -33,10 +33,19 @@ export default class Worker {
         url: 'http://127.0.0.1:8004/public/index.bundle.js'
       })
       // QUESTION: should we reuse the page for performance reason?
-      return await page.evaluate(async definition => {
-        const svgElement = await window.ExcalidrawLib.exportToSvg(JSON.parse(definition))
-        return svgElement.outerHTML
-      }, task.source)
+      return await page.evaluate(
+        async (definition, exportWithDarkMode) => {
+          const scene = JSON.parse(definition)
+          if (exportWithDarkMode) {
+            // Enable Excalidraw's native dark export; a scene-provided appState still wins per key.
+            scene.appState = { exportWithDarkMode: true, ...(scene.appState || {}) }
+          }
+          const svgElement = await window.ExcalidrawLib.exportToSvg(scene)
+          return svgElement.outerHTML
+        },
+        task.source,
+        task.exportWithDarkMode
+      )
     } finally {
       try {
         await page.close()
