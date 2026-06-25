@@ -30,6 +30,7 @@ Support is implemented per diagram type. The currently supported types are:
 |Diagram |Level |Notes
 
 |d2 |native |`dark` defaults the theme to a dark one; `auto` emits an adaptive SVG via D2's `--dark-theme`.
+|goat |native |GoAT's SVG is adaptive out of the box, so `auto` (and `light`) keep that behavior; `dark` forces light strokes for a dark-mode look.
 |graphviz / dot |palette |`dark` synthesizes a dark palette via graph/node/edge color attributes; `auto` injects a `prefers-color-scheme` media query (SVG only).
 |mermaid |themed |`dark` maps to Mermaid's `dark` theme; `auto` degrades to `light` (Mermaid has no adaptive output).
 |plantuml / c4plantuml |themed |`dark` defaults to the `cyborg` theme; `auto` degrades to `light`.

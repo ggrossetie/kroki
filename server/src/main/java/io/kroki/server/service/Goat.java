@@ -52,19 +52,35 @@ public class Goat implements DiagramService {
     return "undefined";
   }
 
+  // Light color GoAT draws with when color-scheme=dark forces a dark-mode look.
+  private static final String DARK_FG = "#FFFFFF";
+
+  @Override
+  public List<ColorScheme> getSupportedColorSchemes() {
+    // GoAT's SVG is adaptive out of the box (prefers-color-scheme media query), so AUTO is native.
+    return List.of(ColorScheme.LIGHT, ColorScheme.DARK, ColorScheme.AUTO);
+  }
+
   @Override
   public Future<Buffer> convert(String sourceDecoded, String serviceName, FileFormat fileFormat, JsonObject options) {
     return vertx.executeBlocking(() -> {
       List<String> commands = new ArrayList<>();
       commands.add(binPath);
 
+      ColorScheme colorScheme = ColorScheme.from(options);
       String svgColorDarkScheme = options.getString("svg-color-dark-scheme");
+      String svgColorLightScheme = options.getString("svg-color-light-scheme");
+      // GoAT already emits an adaptive SVG, so auto/light keep the native behavior. color-scheme=dark
+      // forces a dark-mode look by drawing with a light color in the light scheme too; an explicit
+      // svg-color-light-scheme option still wins.
+      if (colorScheme == ColorScheme.DARK && svgColorLightScheme == null) {
+        svgColorLightScheme = svgColorDarkScheme != null ? svgColorDarkScheme : DARK_FG;
+      }
       if (svgColorDarkScheme != null) {
         commands.add("-svg-color-dark-scheme");
         commands.add(svgColorDarkScheme);
       }
 
-      String svgColorLightScheme = options.getString("svg-color-light-scheme");
       if (svgColorLightScheme != null) {
         commands.add("-svg-color-light-scheme");
         commands.add(svgColorLightScheme);
