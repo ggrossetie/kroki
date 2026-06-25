@@ -31,4 +31,26 @@ public class PikchrServiceTest {
     assertThat(buffer.toString()).isEqualTo("<svg>pikchr</svg>");
     Mockito.verify(commanderMock).execute("{}".getBytes(), "/path/to/pikchr", "--svg-only", "-");
   }
+
+  @Test
+  public void should_add_dark_mode_flag_when_color_scheme_is_dark() throws Throwable {
+    Vertx vertx = Vertx.vertx();
+    Commander commanderMock = mock(Commander.class);
+    when(commanderMock.execute(any(), any(String[].class))).thenReturn("<svg>pikchr</svg>".getBytes());
+    Pikchr pikchrService = new Pikchr(vertx, new JsonObject(), commanderMock);
+    JsonObject options = new JsonObject().put("color-scheme", "dark");
+    pikchrService.convert("box", "pikchr", FileFormat.SVG, options).await(2, TimeUnit.SECONDS);
+    Mockito.verify(commanderMock).execute("box".getBytes(), "pikchr", "--dark-mode", "--svg-only", "-");
+  }
+
+  @Test
+  public void should_not_add_dark_mode_flag_for_auto() throws Throwable {
+    Vertx vertx = Vertx.vertx();
+    Commander commanderMock = mock(Commander.class);
+    when(commanderMock.execute(any(), any(String[].class))).thenReturn("<svg>pikchr</svg>".getBytes());
+    Pikchr pikchrService = new Pikchr(vertx, new JsonObject(), commanderMock);
+    JsonObject options = new JsonObject().put("color-scheme", "auto");
+    pikchrService.convert("box", "pikchr", FileFormat.SVG, options).await(2, TimeUnit.SECONDS);
+    Mockito.verify(commanderMock).execute("box".getBytes(), "pikchr", "--svg-only", "-");
+  }
 }

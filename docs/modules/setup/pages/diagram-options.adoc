@@ -34,6 +34,8 @@ Support is implemented per diagram type. The currently supported types are:
 |goat |native |GoAT's SVG is adaptive out of the box, so `auto` (and `light`) keep that behavior; `dark` forces light strokes for a dark-mode look.
 |graphviz / dot |palette |`dark` synthesizes a dark palette via graph/node/edge color attributes; `auto` injects a `prefers-color-scheme` media query (SVG only).
 |mermaid |themed |`dark` maps to Mermaid's `dark` theme; `auto` degrades to `light` (Mermaid has no adaptive output).
+|nomnoml |palette |`dark` prepends dark `#fill`/`#stroke` directives; author directives win. `auto` degrades to `light`.
+|pikchr |native |`dark` enables Pikchr's `--dark-mode` (color inversion); `auto` degrades to `light`.
 |plantuml / c4plantuml |themed |`dark` defaults to the `cyborg` theme; `auto` degrades to `light`.
 |svgbob |palette |`dark` synthesizes a dark background and light ink; `auto` degrades to `light`.
 |vega / vegalite |palette |`dark` merges a dark background and config (axis/legend/title colors) into the spec; author-provided values win. `auto` degrades to `light`.

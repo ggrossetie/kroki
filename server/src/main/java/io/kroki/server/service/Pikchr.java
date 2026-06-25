@@ -50,14 +50,23 @@ public class Pikchr implements DiagramService {
   }
 
   @Override
+  public List<ColorScheme> getSupportedColorSchemes() {
+    // Pikchr's --dark-mode inverts colors; the SVG carries no media query, so AUTO degrades to light.
+    return List.of(ColorScheme.LIGHT, ColorScheme.DARK);
+  }
+
+  @Override
   public Future<Buffer> convert(String sourceDecoded, String serviceName, FileFormat fileFormat, JsonObject options) {
     return vertx.executeBlocking(() -> {
-      byte[] result = pikchr(sourceDecoded.getBytes());
+      byte[] result = pikchr(sourceDecoded.getBytes(), options);
       return Buffer.buffer(result);
     });
   }
 
-  private byte[] pikchr(byte[] source) throws IOException, InterruptedException, IllegalStateException {
+  private byte[] pikchr(byte[] source, JsonObject options) throws IOException, InterruptedException, IllegalStateException {
+    if (ColorScheme.from(options) == ColorScheme.DARK) {
+      return commander.execute(source, binPath, "--dark-mode", "--svg-only", "-");
+    }
     return commander.execute(source, binPath, "--svg-only", "-");
   }
 }
