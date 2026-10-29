@@ -1,6 +1,7 @@
 package io.kroki.server.service;
 
 import io.kroki.server.error.BadRequestException;
+import io.kroki.server.error.DiagramTypeDisabledException;
 import io.kroki.server.error.UnsupportedDiagramTypeException;
 import io.kroki.server.error.UnsupportedFormatException;
 import io.kroki.server.format.FileFormat;
@@ -44,6 +45,10 @@ public class DiagramRest {
       DiagramHandler diagramHandler = registry.get(diagramType);
       if (diagramHandler == null) {
         routingContext.fail(new UnsupportedDiagramTypeException(diagramType, registry.names()));
+        return;
+      }
+      if (registry.isDisabled(diagramType)) {
+        routingContext.fail(new DiagramTypeDisabledException(diagramType));
         return;
       }
       try {

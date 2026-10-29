@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 public class HealthHandler {
@@ -17,6 +18,7 @@ public class HealthHandler {
   private final String krokiVersionNumber;
   private final String krokiBuildHash;
   private final Supplier<Map<String, String>> versionsSupplier;
+  private final Supplier<Set<String>> disabledSupplier;
 
   public HealthHandler(Map<String, String> versions) {
     this(() -> versions, null);
@@ -36,9 +38,18 @@ public class HealthHandler {
    *                          immediately, both in the /health response and on the homepage.
    */
   public HealthHandler(Supplier<Map<String, String>> versionsSupplier, KrokiBlockedThreadChecker blockedThreadChecker) {
+    this(versionsSupplier, Set::of, blockedThreadChecker);
+  }
+
+  /**
+   * @param disabledSupplier queried on every call so that diagram types disabled or re-enabled at
+   *                         runtime (see {@code KROKI_DISABLED_DIAGRAM_TYPES}) are reflected immediately.
+   */
+  public HealthHandler(Supplier<Map<String, String>> versionsSupplier, Supplier<Set<String>> disabledSupplier, KrokiBlockedThreadChecker blockedThreadChecker) {
     krokiVersionNumber = Main.getApplicationProperty("app.version", "");
     krokiBuildHash = Main.getApplicationProperty("app.sha1", "");
     this.versionsSupplier = versionsSupplier;
+    this.disabledSupplier = disabledSupplier;
   }
 
   public Handler<RoutingContext> create() {
@@ -53,6 +64,11 @@ public class HealthHandler {
       data.put("version", versions);
       for (ServiceVersion serviceVersion : getServiceVersions()) {
         versions.put(serviceVersion.getService(), serviceVersion.getVersion());
+      }
+      // disabled diagram types do not fail the health check: the server itself is healthy
+      Set<String> disabled = disabledSupplier.get();
+      if (!disabled.isEmpty()) {
+        data.put("disabled", new ArrayList<>(disabled));
       }
       routingContext
         .response()
@@ -71,8 +87,9 @@ public class HealthHandler {
 
   public List<ServiceVersion> getServiceVersions() {
     List<ServiceVersion> serviceVersions = new ArrayList<>();
+    Set<String> disabled = disabledSupplier.get();
     for (Map.Entry<String, String> entry : versionsSupplier.get().entrySet()) {
-      serviceVersions.add(new ServiceVersion(entry.getKey(), entry.getValue()));
+      serviceVersions.add(new ServiceVersion(entry.getKey(), entry.getValue(), disabled.contains(entry.getKey())));
     }
     return serviceVersions;
   }

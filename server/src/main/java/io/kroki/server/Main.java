@@ -40,7 +40,7 @@ public class Main {
       .build();
     ConfigRetriever retriever = ConfigRetriever.create(vertx);
     JsonObject config = retriever.getConfig().await();
-    Server.start(vertx, vertxOptions, config).onComplete(server -> {
+    Server.start(vertx, vertxOptions, config, retriever).onComplete(server -> {
       if (server.failed()) {
         logger.error("Failed to start Kroki server", server.cause());
       } else {

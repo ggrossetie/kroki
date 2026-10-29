@@ -39,11 +39,12 @@ public class Server extends AbstractVerticle {
 
   @Override
   public void start(Promise<Void> startPromise) {
-    ConfigRetriever.create(vertx).getConfig().onComplete(ar -> {
+    ConfigRetriever retriever = ConfigRetriever.create(vertx);
+    retriever.getConfig().onComplete(ar -> {
       if (ar.failed()) {
         startPromise.fail(ar.cause());
       } else {
-        start(vertx, new VertxOptions(), ar.result()).onComplete(startHandler -> {
+        start(vertx, new VertxOptions(), ar.result(), retriever).onComplete(startHandler -> {
           if (startHandler.failed()) {
             logger.error("Failed to start Kroki server", startHandler.cause());
             startPromise.fail(startHandler.cause());
@@ -57,6 +58,15 @@ public class Server extends AbstractVerticle {
   }
 
   static Future<HttpServer> start(Vertx vertx, VertxOptions vertxOptions, JsonObject config) {
+    return start(vertx, vertxOptions, config, null);
+  }
+
+  /**
+   * @param retriever when not null, listened to so that the configuration keys that can change
+   *                  at runtime (currently {@code KROKI_DISABLED_DIAGRAM_TYPES}) are applied
+   *                  without restarting the server. Any other key is only read at startup.
+   */
+  static Future<HttpServer> start(Vertx vertx, VertxOptions vertxOptions, JsonObject config, ConfigRetriever retriever) {
     HttpServerOptions serverOptions = new HttpServerOptions();
     Optional<Integer> maxUriLength = Optional.ofNullable(config.getInteger("KROKI_MAX_URI_LENGTH"));
     Optional<Integer> maxHeaderSize = Optional.ofNullable(config.getInteger("KROKI_MAX_HEADER_SIZE"));
@@ -125,6 +135,11 @@ public class Server extends AbstractVerticle {
     registry.register(new Goat(vertx, config, commander), "goat");
     registry.register(new Lini(vertx, config, commander), "lini");
 
+    registry.updateDisabled(config);
+    if (retriever != null) {
+      retriever.listen(change -> registry.updateDisabled(change.getNewConfiguration()));
+    }
+
     mountCompanionDiscovery(vertx, config, router, bodyHandler, delegator, registry);
 
     router.post("/")
@@ -140,7 +155,7 @@ public class Server extends AbstractVerticle {
     // health
     // queries registry.getVersions() live (rather than a startup snapshot) so that companion
     // services registered or evicted at runtime (see issue #1423) are reflected immediately
-    HealthHandler healthHandler = new HealthHandler(registry::getVersions, blockedThreadChecker);
+    HealthHandler healthHandler = new HealthHandler(registry::getVersions, registry::getDisabled, blockedThreadChecker);
     Handler<RoutingContext> healthHandlerService = healthHandler.create();
     router.get("/health")
       .handler(healthHandlerService);

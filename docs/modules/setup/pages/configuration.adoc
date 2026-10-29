@@ -125,6 +125,73 @@ To allow some trusted origins (e.g. an internal image bank) without switching to
 [source,env]
 KROKI_DIAGRAMSNET_ALLOWED_ORIGINS=https://images.example.com,https://cdn.example.com
 
+== Disabling Diagram Types
+
+You can disable one or more diagram types, for instance to mitigate a vulnerability in a diagram library or to shed load, without stopping the server.
+Requests to a disabled diagram type are rejected with a `503 Service Unavailable` error, while every other diagram type keeps working:
+
+KROKI_DISABLED_DIAGRAM_TYPES:: Comma-separated list of the diagram types to disable, for instance `plantuml,c4plantuml` (default: none).
+
+Each name matches a single diagram type, as used in the URL (`/plantuml/svg/...`) or in the `diagram_type` field: aliases and diagram types served by the same library must be listed explicitly.
+For instance, disabling `graphviz` does not disable `dot`, and disabling `blockdiag` does not disable `seqdiag`, `actdiag`, `nwdiag`, `packetdiag` and `rackdiag`.
+Names are case-insensitive.
+
+Disabled diagram types remain listed, with their version, on the `/health` endpoint and the homepage.
+The `/health` endpoint keeps reporting a `pass` status, so that a liveness probe does not restart the server, and lists the disabled diagram types in a `disabled` field:
+
+[source,json]
+----
+{
+  "status": "pass",
+  "disabled": ["c4plantuml", "plantuml"],
+  "version": { ... }
+}
+----
+
+=== Disabling a diagram type at runtime
+
+Kroki can also read its configuration from a JSON file, set with the `VERTX_CONFIG_PATH` environment variable (or `conf/config.json`, relative to the working directory, if it exists when the server starts).
+This file is read every 5 seconds: changes to `KROKI_DISABLED_DIAGRAM_TYPES` are applied without restarting the server, and requests already in progress are not interrupted.
+In this file, the value can either be a comma-separated string or an array:
+
+.config.json
+[source,json]
+----
+{
+  "KROKI_DISABLED_DIAGRAM_TYPES": ["plantuml", "c4plantuml"]
+}
+----
+
+Values from the file take precedence over environment variables.
+Removing `KROKI_DISABLED_DIAGRAM_TYPES` from the file therefore falls back to the value of the environment variable, if any.
+
+IMPORTANT: `KROKI_DISABLED_DIAGRAM_TYPES` is the only setting applied at runtime: any other setting from this file is only read when the server starts.
+
+On Kubernetes, you can mount this file from a ConfigMap, which propagates the change to every replica:
+
+[source,yaml]
+----
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kroki-config
+data:
+  config.json: |
+    {
+      "KROKI_DISABLED_DIAGRAM_TYPES": ["plantuml", "c4plantuml"]
+    }
+---
+# in the Kroki container of the Deployment
+env:
+  - name: VERTX_CONFIG_PATH
+    value: /etc/kroki/config.json
+volumeMounts:
+  - name: kroki-config
+    mountPath: /etc/kroki
+----
+
+NOTE: Mount the ConfigMap as a directory, as above, and not as a single file with `subPath`: Kubernetes does not update files mounted with `subPath`.
+
 == Cross-origin resource sharing (CORS)
 
 By default, the following headers are allowed:

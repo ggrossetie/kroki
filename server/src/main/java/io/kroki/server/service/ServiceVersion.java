@@ -6,10 +6,16 @@ public class ServiceVersion {
 
   private String service;
   private String version;
+  private boolean disabled;
 
   public ServiceVersion(String service, String version) {
+    this(service, version, false);
+  }
+
+  public ServiceVersion(String service, String version, boolean disabled) {
     this.service = service;
     this.version = version;
+    this.disabled = disabled;
   }
 
   public String getService() {
@@ -20,10 +26,14 @@ public class ServiceVersion {
     return version;
   }
 
+  public boolean isDisabled() {
+    return disabled;
+  }
+
   public String toHTML(String template) {
     return template
       .replace("{service}", service)
-      .replace("{version}", version);
+      .replace("{version}", disabled ? version + " (disabled)" : version);
   }
 
   @Override
@@ -31,12 +41,13 @@ public class ServiceVersion {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     ServiceVersion that = (ServiceVersion) o;
-    return Objects.equals(service, that.service) &&
+    return disabled == that.disabled &&
+      Objects.equals(service, that.service) &&
       Objects.equals(version, that.version);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(service, version);
+    return Objects.hash(service, version, disabled);
   }
 }

@@ -142,7 +142,10 @@ public class ErrorHandler implements io.vertx.ext.web.handler.ErrorHandler {
     HttpServerResponse response = errorContext.getResponse();
     response.setStatusMessage(errorContext.getStatusMessage());
     int errorCode = errorContext.getErrorCode();
-    Level level = (errorCode >= 400 && errorCode <= 499) ? Level.WARN : Level.ERROR;
+    // a diagram type disabled on purpose by the operator is not a server error
+    Level level = (errorCode >= 400 && errorCode <= 499) || errorContext.getErrorInfo().getFailure() instanceof DiagramTypeDisabledException
+      ? Level.WARN
+      : Level.ERROR;
     logging.log(level, errorContext.getRequest(), errorContext.getErrorInfo());
     response.setStatusCode(errorCode);
     ErrorInfo errorInfo = errorContext.getErrorInfo();
